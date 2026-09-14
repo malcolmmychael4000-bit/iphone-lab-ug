@@ -334,16 +334,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                       Select Repair Service *
                     </label>
                     <div className="relative">
-                      <Wrench className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <select
-                        id="booking-service-type"
-                        name="service_type"
-                        value={formData.service_type}
-                        onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
-                        className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
-                          isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
-                        }`}
-                      >
+  <select
+    id="booking-service-type"
+    name="service_type"
+    value={formData.service_type}
+    onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+    className={`w-full px-4 pr-10 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D98B5] ${
+      isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
+    }`}
+  >
                         {REPAIR_TYPES.map((type, idx) => (
                           <option key={idx} value={type} className={isDarkMode ? 'bg-slate-900' : 'bg-white'}>
                             {type}
@@ -354,31 +353,30 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   </div>
 
                   {/* Device Model Dropdown */}
-                  <div>
-                    <label htmlFor="booking-device-model" className={`block text-xs font-bold uppercase tracking-wider mb-2 ${
-                      isDarkMode ? 'text-slate-300' : 'text-slate-700'
-                    }`}>
-                      Device Model *
-                    </label>
-                    <div className="relative">
-                      <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <select
-                        id="booking-device-model"
-                        name="device_model"
-                        value={formData.device_model}
-                        onChange={(e) => setFormData({ ...formData, device_model: e.target.value })}
-                        className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
-                          isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
-                        }`}
-                      >
-                        {IPHONE_MODELS.map((model, idx) => (
-                          <option key={idx} value={model} className={isDarkMode ? 'bg-slate-900' : 'bg-white'}>
-                            {model}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+      <div>
+        <label htmlFor="booking-device-model" className={`block text-xs font-bold uppercase tracking-wider mb-2 ${
+          isDarkMode ? 'text-slate-300' : 'text-slate-700'
+        }`}>
+          Device Model *
+        </label>
+        <div className="relative">
+          <select
+            id="booking-device-model"
+            name="device_model"
+            value={formData.device_model}
+            onChange={(e) => setFormData({ ...formData, device_model: e.target.value })}
+            className={`w-full px-4 pr-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D98B5] ${
+              isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
+            }`}
+          >
+            {IPHONE_MODELS.map((model, idx) => (
+              <option key={idx} value={model} className={isDarkMode ? 'bg-slate-900' : 'bg-white'}>
+                {model}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
                   {/* Repair Notes */}
                   <div className="md:col-span-2">
