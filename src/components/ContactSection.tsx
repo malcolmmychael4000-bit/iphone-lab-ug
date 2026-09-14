@@ -173,7 +173,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                   </a>
 
                   <a
-                    href="https://www.tiktok.com/search?q=iphone%20lab%20uganda"
+                    href="https://www.tiktok.com/@iphone_lab_ug"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm ${
