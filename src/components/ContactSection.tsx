@@ -194,7 +194,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
               {showLiveMap ? (
                 <iframe
                   title="iPhone Lab UG Location Map at New Pioneer Mall Kampala"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.758810967396!2d32.5786111!3d0.3155556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x177dbb830d97b91b%3A0xcf95b54203673c24!2sPioneer%20Mall%2C%20Kampala!5e0!3m2!1sen!2sug!4v1700000000000!5m2!1sen!2sug"
+                  src="https://www.google.com/maps/search/?api=1&query=iPhone+Lab+UG+New+Pioneer+Mall+Kampala"
                   width="600"
                   height="300"
                   style={{ border: 0, width: '100%', height: '100%' }}
@@ -224,7 +224,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                       Load Interactive Map
                     </button>
                     <a
-                     href="https://www.google.com/maps/@0.3142,32.5772,19z"
+                      href="https://www.google.com/maps/search/?api=1&query=iPhone+Lab+UG+New+Pioneer+Mall+Kampala"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-white/20 transition-all flex items-center gap-1.5"
@@ -237,7 +237,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
               
               {showLiveMap && (
                 <a
-                 href="https://www.google.com/maps/@0.3142,32.5772,19z"
+                 href="https://www.google.com/maps/search/?api=1&query=iPhone+Lab+UG+New+Pioneer+Mall+Kampala"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute bottom-3 right-3 bg-[#1F3864]/90 hover:bg-[#1F3864] text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-white/20 shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all z-20"
