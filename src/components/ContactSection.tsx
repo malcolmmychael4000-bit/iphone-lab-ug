@@ -212,8 +212,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                   </div>
                   <h4 className="text-white font-bold text-sm mb-1 relative z-10">New Pioneer Mall · Shop PB86</h4>
                   <p className="text-slate-400 text-xs mb-4 max-w-xs relative z-10">
-                    Kampala, Central Division, Uganda · Ground Level
-                  </p>
+  Kampala, Central Division, Uganda
+</p>
                   
                   <div className="flex items-center gap-3 relative z-10">
                     <button
