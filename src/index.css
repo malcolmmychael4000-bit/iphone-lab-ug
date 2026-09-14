@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-display: swap;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  
+  .glass-card-dark {
+    background: rgba(15, 23, 36, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-card-light {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  }
+
+  .ios-glass {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .ios-glass-dark {
+    background: rgba(15, 23, 36, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .ios-glass-light {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+  }
+
+  .liquid-teal {
+    background: linear-gradient(135deg, rgba(29,155,181,0.22) 0%, rgba(29,155,181,0.06) 100%);
+  }
+
+  .glow-btn {
+    background: #1D9BB5;
+    box-shadow: 0 0 20px rgba(29, 155, 181, 0.4);
+    transition: all 0.2s ease-in-out;
+  }
+
+  .glow-btn:hover {
+    box-shadow: 0 0 30px rgba(29, 155, 181, 0.65);
+    transform: translateY(-1px);
+  }
+
+  .gold-badge {
+    color: #D4A017;
+    border: 1px solid rgba(212, 160, 23, 0.35);
+    background: rgba(212, 160, 23, 0.08);
+  }
+}
+

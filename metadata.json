@@ -1,0 +1,6 @@
+{
+  "name": "iPhone Lab UG",
+  "description": "Specialized iPhone repair laboratory and genuine parts retail shop in Kampala, Uganda. We Fix. We Care. We Connect.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
