@@ -224,7 +224,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                       Load Interactive Map
                     </button>
                     <a
-                      href="https://www.google.com/maps/search/?api=1&query=0.3142,32.5772+(New+Pioneer+Mall+-+iPhone+Lab+UG)"
+                      href="https://www.google.com/maps/search/?api=1&query=iPhone+Lab+UG+New+Pioneer+Mall+Kampala"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-white/20 transition-all flex items-center gap-1.5"
@@ -237,7 +237,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
               
               {showLiveMap && (
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=0.3142,32.5772+(New+Pioneer+Mall+-+iPhone+Lab+UG)"
+                 href="https://www.google.com/maps/search/?api=1&query=iPhone+Lab+UG+New+Pioneer+Mall+Kampala"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute bottom-3 right-3 bg-[#1F3864]/90 hover:bg-[#1F3864] text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-white/20 shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all z-20"
