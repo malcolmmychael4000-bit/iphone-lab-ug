@@ -375,101 +375,43 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
     e: React.ChangeEvent<HTMLInputElement>,
     fieldKey: 'imageUrl' | 'incellImageUrl' | 'oledImageUrl' = 'imageUrl'
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 25 * 1024 * 1024) {
-      alert('Image file is too large. Please select an image or PNG smaller than 25MB.');
-      return;
-    }
-
-    setIsUploadingImage(true);
     try {
-      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
-      const base64Data = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const rawUrl = ev.target?.result as string;
-          if (!rawUrl) return resolve('');
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 640;
-            let { width, height } = img;
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return resolve(rawUrl);
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-            if (isPng) {
-              // Retain transparency for PNG screen photos
-              ctx.clearRect(0, 0, width, height);
-              ctx.drawImage(img, 0, 0, width, height);
-              try {
-                const webp = canvas.toDataURL('image/webp', 0.90);
-                if (webp && webp.startsWith('data:image/webp') && webp.length < 500000) {
-                  return resolve(webp);
-                }
-              } catch {}
-              resolve(canvas.toDataURL('image/png'));
-            } else {
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, width, height);
-              ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.85));
-            }
-          };
-          img.onerror = () => resolve(rawUrl);
-          img.src = rawUrl;
-        };
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-
-      if (!base64Data) {
-        setIsUploadingImage(false);
+      if (file.size > 25 * 1024 * 1024) {
+        alert('Image file is too large. Please select an image smaller than 25MB.');
         return;
       }
 
-      // Upload to server if available, otherwise use preserved optimized data URL
-      let permanentUrl = base64Data;
-      try {
-        const token = localStorage.getItem('iphone_lab_admin_token') || '';
-        const res = await fetch('/api/admin/upload-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ imageBase64: base64Data, filename: file.name }),
-        });
-        const contentType = res.headers.get('content-type') || '';
-        if (res.ok && contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data.image_url && typeof data.image_url === 'string') {
-            permanentUrl = data.image_url;
-          }
-        }
-      } catch (uploadErr) {
-        console.warn('Server image upload fallback to data URL:', uploadErr);
-      }
+      setIsUploadingImage(true);
 
-      setPartForm((prev) => ({
-        ...prev,
-        [fieldKey]: permanentUrl,
-        imageUrl: fieldKey === 'imageUrl' ? permanentUrl : (prev.imageUrl || permanentUrl),
-      }));
-    } catch (err) {
-      console.error('File compression error:', err);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36.substring(2))}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Upload directly to Supabase Storage 'inventory' bucket
+      const { error: uploadError } = await supabase.storage
+        .from('inventory')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data } = supabase.storage
+        .from('inventory')
+        .getPublicUrl(filePath);
+
+      if (data?.publicUrl) {
+        setPartForm((prev: any) => ({
+          ...prev,
+          [fieldKey]: data.publicUrl,
+          imageUrl: fieldKey === 'imageUrl' ? data.publicUrl : (prev.imageUrl || data.publicUrl),
+        }));
+      }
+    } catch (err: any) {
+      console.error('Supabase upload error:', err);
+      alert('Image upload failed: ' + err.message);
     } finally {
       setIsUploadingImage(false);
     }
@@ -491,29 +433,28 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
   };
 
   const handleOpenEditModal = (part: PartProduct) => {
-    const isScreen = part.category === 'Screens';
-    const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier === 'Incell' ? (part.imageUrl || part.image_url) : '') || '';
-    const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier === 'OLED' ? (part.imageUrl || part.image_url) : '') || '';
-
-    setEditingPart(part);
-    setPartForm({
-      name: part.name,
-      category: part.category,
-      subCategory: part.subCategory,
-      screenTier: part.screenTier,
-      incellPriceUGX: part.incellPriceUGX,
-      oledPriceUGX: part.oledPriceUGX,
-      oemPriceUGX: part.oemPriceUGX,
-      priceUGX: part.priceUGX,
-      stockStatus: part.stockStatus,
-      compatibilityRange: part.compatibilityRange,
-      description: part.description || '',
-      imageUrl: isScreen ? (oledImg || incellImg) : (part.imageUrl || part.image_url || ''),
-      incellImageUrl: incellImg,
-      oledImageUrl: oledImg,
-    });
-  };
-
+  const isScreen = part.category === 'Screens';
+  const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier === 'Incell' ? (part.imageUrl || part.image_url) : '');
+  const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier === 'OLED' ? (part.imageUrl || part.image_url) : '');
+  
+  setEditingPart(part);
+  setEditingPart(part);
+  setPartForm({
+    name: part.name || '',
+    category: part.category,
+    subCategory: part.subCategory || '',
+    screenTier: part.screenTier || '',
+    incellPriceUGX: part.incellPriceUGX || 0,
+    oledPriceUGX: part.oledPriceUGX || 0,
+    oemPriceUGX: part.oemPriceUGX || 0,
+    priceUGX: part.priceUGX || 0,
+    stockStatus: part.stockStatus || 'In Stock',
+    compatibilityRange: part.compatibilityRange || '',
+    description: part.description || '',
+    imageUrl: isScreen ? (oledImg || incellImg) : (part.imageUrl || part.image_url || ''),
+    incellImageUrl: incellImg,
+    oledImageUrl: oledImg,
+  } as any);
   const handleSavePart = () => {
     if (!partForm.name.trim()) return;
 
