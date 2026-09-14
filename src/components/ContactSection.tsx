@@ -173,15 +173,15 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                   </a>
 
                   <a
-                    href="https://www.tiktok.com/@iphone_lab_ug"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm ${
-                      isDarkMode
-                        ? 'bg-black hover:bg-black/80 border border-white/20 text-white'
-                        : 'bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white'
-                    }`}
-                  >
+  href="https://www.tiktok.com/@iphone_lab_ug"
+  target="_blank"
+  rel="noopener noreferrer"
+  className={`font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm ${
+    isDarkMode
+      ? 'bg-black hover:bg-black/80 border border-white/20 text-white'
+      : 'bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white'
+  }`}
+>
                     <Video className="w-4 h-4 text-[#D4A017]" />
                     <span>TikTok: iPhone Lab Uganda</span>
                   </a>
