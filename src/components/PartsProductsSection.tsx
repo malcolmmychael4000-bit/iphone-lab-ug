@@ -837,7 +837,7 @@ if (sortBy === 'price-desc') {
                           {isScreen ? `${currentTier} Rate` : 'Retail / Tech Price'}
                         </span>
                         <div className="text-xl font-black text-[#1D9BB5] tracking-tight">
-                          {formatUGX(activePrice)}
+                          {formatUGX(activePrice ?? 0)}
                         </div>
                       </div>
 
