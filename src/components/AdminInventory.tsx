@@ -388,7 +388,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
       setIsUploadingImage(true);
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36.substring(2))}-${Date.now()}.${fileExt}`;
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       // Upload directly to Supabase Storage 'inventory' bucket
