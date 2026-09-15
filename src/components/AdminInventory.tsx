@@ -44,14 +44,15 @@ interface AdminInventoryProps {
   onRefreshData?: () => void;
 }
 
-export const AdminInventory: React.FC<AdminInventoryProps> = ({
-  isDarkMode,
-  parts,
-  onUpdatePart,
-  onAddPart,
-  onDeletePart,
-  onRefreshData,
-}) => {
+export const AdminInventory = (props: AdminInventoryProps) => {
+  const {
+    isDarkMode,
+    parts,
+    onUpdatePart,
+    onAddPart,
+    onDeletePart,
+    onRefreshData,
+  } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [filterStockStatus, setFilterStockStatus] = useState<string>('All');
@@ -434,28 +435,29 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
   };
 
   const handleOpenEditModal = (part: PartProduct) => {
-  const isScreen = part.category === 'Screens';
-  const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier === 'Incell' ? (part.imageUrl || part.image_url) : '');
-  const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier === 'OLED' ? (part.imageUrl || part.image_url) : '');
-  
-  setEditingPart(part);
-  setEditingPart(part);
-  setPartForm({
-    name: part.name || '',
-    category: part.category,
-    subCategory: part.subCategory || '',
-    screenTier: part.screenTier || '',
-    incellPriceUGX: part.incellPriceUGX || 0,
-    oledPriceUGX: part.oledPriceUGX || 0,
-    oemPriceUGX: part.oemPriceUGX || 0,
-    priceUGX: part.priceUGX || 0,
-    stockStatus: part.stockStatus || 'In Stock',
-    compatibilityRange: part.compatibilityRange || '',
-    description: part.description || '',
-    imageUrl: isScreen ? (oledImg || incellImg) : (part.imageUrl || part.image_url || ''),
-    incellImageUrl: incellImg,
-    oledImageUrl: oledImg,
-  } as any);
+    const isScreen = part.category === 'Screens';
+    const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier === 'Incell' ? (part.imageUrl || part.image_url) : '');
+    const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier === 'OLED' ? (part.imageUrl || part.image_url) : '');
+    
+    setEditingPart(part);
+    setPartForm({
+      name: part.name || '',
+      category: part.category,
+      subCategory: part.subCategory || '',
+      screenTier: part.screenTier || '',
+      incellPriceUGX: part.incellPriceUGX || 0,
+      oledPriceUGX: part.oledPriceUGX || 0,
+      oemPriceUGX: part.oemPriceUGX || 0,
+      priceUGX: part.priceUGX || 0,
+      stockStatus: part.stockStatus || 'In Stock',
+      compatibilityRange: part.compatibilityRange || '',
+      description: part.description || '',
+      imageUrl: isScreen ? (oledImg || incellImg) : (part.imageUrl || part.image_url || ''),
+      incellImageUrl: incellImg,
+      oledImageUrl: oledImg,
+    } as any);
+  }; // <--- THIS CLOSING BRACE WAS MISSING!
+
   const handleSavePart = () => {
     if (!partForm.name.trim()) return;
 
@@ -1424,10 +1426,10 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                   Cancel
                 </button>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+    )}
+  </AnimatePresence>
     </div>
   );
 };
