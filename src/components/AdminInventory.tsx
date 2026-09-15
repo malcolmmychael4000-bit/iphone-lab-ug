@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase'; // Adjust path if your lib folder is located elsewhere
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
