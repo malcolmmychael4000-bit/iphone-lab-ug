@@ -291,15 +291,15 @@ export const PartsProductsSection: React.FC<PartsProductsSectionProps> = ({
       })
       .sort((a, b) => {
         if (sortBy === 'price-asc') {
-          const priceA = a.category === 'Screens' ? (a.incellPriceUGX || a.priceUGX) : a.priceUGX;
-          const priceB = b.category === 'Screens' ? (b.incellPriceUGX || b.priceUGX) : b.priceUGX;
-          return priceA - priceB;
-        }
-        if (sortBy === 'price-desc') {
-          const priceA = a.category === 'Screens' ? (a.oledPriceUGX || a.priceUGX) : a.priceUGX;
-          const priceB = b.category === 'Screens' ? (b.oledPriceUGX || b.priceUGX) : b.priceUGX;
-          return priceB - priceA;
-        }
+  const priceA = (a.category === 'Screens' ? (a.incellPriceUGX ?? 0) : (a.priceUGX ?? 0));
+  const priceB = (b.category === 'Screens' ? (b.incellPriceUGX ?? 0) : (b.priceUGX ?? 0));
+  return priceA - priceB;
+}
+if (sortBy === 'price-desc') {
+  const priceA = (a.category === 'Screens' ? (a.incellPriceUGX ?? 0) : (a.priceUGX ?? 0));
+  const priceB = (b.category === 'Screens' ? (b.incellPriceUGX ?? 0) : (b.priceUGX ?? 0));
+  return priceB - priceA;
+}
         if (sortBy === 'name-asc') {
           return a.name.localeCompare(b.name);
         }
