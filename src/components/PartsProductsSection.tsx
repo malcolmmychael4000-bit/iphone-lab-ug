@@ -628,7 +628,7 @@ if (sortBy === 'price-desc') {
                     }) which is currently Out of Stock. Please notify me when restocked at Shop PB86.`
                   : `Hello iPhone Lab UG, I am inquiring about: ${part.name} (${
                       isScreen ? currentTier + ' Tier' : ''
-                    }) - Listed at ${formatUGX(activePrice)}. Is this in stock at Shop PB86?`;
+                    } – Listed at ${formatUGX(activePrice ?? 0)}. Is this in stock at Shop PB86?`;
                 const whatsappUrl = buildWhatsAppLink('0753234218', whatsappText);
 
                 return (
