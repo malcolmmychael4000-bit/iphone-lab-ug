@@ -368,9 +368,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isDarkMode, onBackToMain
 
     try {
       const isScreen = editingPart.category === 'Screens';
-      const incellImg = isScreen ? (editingPart.incell_image_url || editingPart.incellImageUrl || '') : '';
-      const oledImg = isScreen ? (editingPart.oled_image_url || editingPart.oledImageUrl || '') : '';
-      const primaryImg = isScreen ? (oledImg || incellImg) : (editingPart.image_url || editingPart.imageUrl || '');
+const incellImg = isScreen ? (editingPart.incell_image_url || editingPart.incellImageUrl || '') : '';
+const oledImg = isScreen ? (editingPart.oled_image_url || editingPart.oledImageUrl || '') : '';
+
+// Check main image_url first, then fall back to oled/incell tiers
+const primaryImg = editingPart.image_url || editingPart.imageUrl || oledImg || incellImg || '';
 
       const partToSave: PartProduct = {
         ...editingPart,
