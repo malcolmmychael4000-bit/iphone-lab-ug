@@ -164,10 +164,24 @@ export const AdminInventory = (props: AdminInventoryProps) => {
         return;
       }
 
-      // Save directly to Supabase cloud database
-      const { error } = await supabase
-        .from('parts_inventory')
-        .upsert(cachedParts);
+      // Map camelCase frontend fields to Supabase column names
+const formattedParts = cachedParts.map((p: any) => ({
+  id: p.id,
+  name: p.name,
+  category: p.category,
+  screen_tier: p.screenTier || p.screen_tier || null,
+  price_ugx: p.priceUGX || p.price_ugx || 0,
+  incell_price_ugx: p.incellPriceUGX || p.incell_price_ugx || null,
+  oled_price_ugx: p.oledPriceUGX || p.oled_price_ugx || null,
+  stock_status: p.stockStatus || p.stock_status || 'in_stock',
+  image_url: p.imageUrl || p.image_url || null,
+  description: p.description || null,
+  compatibility_range: p.compatibilityRange || p.compatibility_range || null,
+}));
+
+const { error } = await supabase
+  .from('parts_inventory')
+  .upsert(formattedParts);
 
       if (error) {
         showToast('Failed to sync to Supabase: ' + error.message, 'error');
