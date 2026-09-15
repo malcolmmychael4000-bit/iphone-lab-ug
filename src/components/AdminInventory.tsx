@@ -164,23 +164,16 @@ export const AdminInventory = (props: AdminInventoryProps) => {
         return;
       }
 
-      saveStoredParts(cachedParts);
-      const token = localStorage.getItem('iphone_lab_admin_token') || '';
-      const res = await fetch('/api/admin/restore-inventory', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ parts: cachedParts }),
-      });
+      // Save directly to Supabase cloud database
+      const { error } = await supabase
+        .from('parts_inventory')
+        .upsert(cachedParts);
 
-      if (res.ok) {
-        showToast(`Recovered ${cachedParts.length} products & screen PNGs from browser backup!`);
-        if (onRefreshData) onRefreshData();
+      if (error) {
+        showToast('Failed to sync to Supabase: ' + error.message, 'error');
       } else {
-        cachedParts.forEach((p) => onUpdatePart(p));
-        showToast(`Recovered ${cachedParts.length} products to active view!`);
+        showToast(`Successfully pushed ${cachedParts.length} products to Supabase cloud!`);
+        if (onRefreshData) onRefreshData();
       }
     } catch (err: any) {
       showToast('Recovery failed: ' + (err.message || 'Error'), 'error');
