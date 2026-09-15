@@ -22,7 +22,7 @@ export interface PartProduct {
   incellPriceUGX?: number;
   oledPriceUGX?: number;
   oemPriceUGX?: number;
-  priceUGX: number;
+  priceUGX?: number;
   compatibilityRange: string;
   stockStatus: 'In Stock' | 'Low Stock' | 'Limited Stock' | 'Pre-Order' | 'Out of Stock';
   description?: string;
