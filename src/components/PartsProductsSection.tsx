@@ -620,14 +620,14 @@ if (sortBy === 'price-desc') {
 
                 // For Screens: We show screen display image. For other items: ONLY render photo container if a real custom image exists!
                 const shouldRenderImage = isScreen || hasCustomPhoto;
-                const getScreenDisplayImage = (part: PartProduct, tier: 'InCell' | 'OLED') => {
-  const tierUrl = tier === 'InCell'
-    ? (part.incell_image_url || part.incellImageUrl)
-    : (part.oled_image_url || part.oledImageUrl);
 
-  // Check tier URL first; if empty, fall back to main image_url
-  return tierUrl || part.image_url || part.imageUrl || '';
-};
+               const partAny = part as any;
+const isInCell = String(currentTier).toLowerCase() === 'incell';
+const tierImage = isInCell
+  ? (partAny.incell_image_url || partAny.incellImageUrl)
+  : (partAny.oled_image_url || partAny.oledImageUrl);
+
+const displayImage: string = (isScreen ? tierImage : '') || customProductImage || '';
                 const whatsappText = isOutOfStock
                   ? `Hello iPhone Lab UG, I am inquiring about: ${part.name} (${
                       isScreen ? currentTier + ' Tier' : ''
