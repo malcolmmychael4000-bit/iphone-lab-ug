@@ -165,23 +165,31 @@ export const AdminInventory = (props: AdminInventoryProps) => {
       }
 
       // Map camelCase frontend fields to Supabase column names
-const formattedParts = cachedParts.map((p: any) => ({
-  id: p.id,
-  name: p.name,
-  category: p.category,
-  screen_tier: p.screenTier || p.screen_tier || null,
-  price_ugx: p.priceUGX || p.price_ugx || 0,
-  incell_price_ugx: p.incellPriceUGX || p.incell_price_ugx || null,
-  oled_price_ugx: p.oledPriceUGX || p.oled_price_ugx || null,
-  stock_status: p.stockStatus || p.stock_status || 'in_stock',
-  image_url: p.imageUrl || p.image_url || null,
-  description: p.description || null,
-  compatibility_range: p.compatibilityRange || p.compatibility_range || null,
-}));
+const formattedParts = cachedParts.map((part: PartProduct) => {
+  const imageUrl = part.imageUrl || part.image_url || undefined;
+  const incellImageUrl = part.incellImageUrl || part.incell_image_url || undefined;
+  const oledImageUrl = part.oledImageUrl || part.oled_image_url || undefined;
+
+  return {
+    id: part.id,
+    name: part.name,
+    category: part.category,
+    screen_tier: part.screenTier || null,
+    price_ugx: part.priceUGX ?? 0,
+    incell_price_ugx: part.incellPriceUGX ?? null,
+    oled_price_ugx: part.oledPriceUGX ?? null,
+    stock_status: part.stockStatus || 'In Stock',
+    image_url: imageUrl,
+    incell_image_url: incellImageUrl,
+    oled_image_url: oledImageUrl,
+    description: part.description || null,
+    compatibility_range: part.compatibilityRange || null,
+  };
+});
 
 const { error } = await supabase
   .from('parts_inventory')
-  .upsert(formattedParts);
+  .upsert(formattedParts, { onConflict: 'id' });
 
       if (error) {
         showToast('Failed to sync to Supabase: ' + error.message, 'error');
@@ -204,7 +212,7 @@ const { error } = await supabase
     oledPriceUGX?: number;
     oemPriceUGX?: number;
     priceUGX: number;
-    stockStatus: 'In Stock' | 'Low Stock' | 'Out of Stock';
+    stockStatus: PartProduct['stockStatus'];
     compatibilityRange: string;
     description: string;
     imageUrl?: string;
@@ -443,35 +451,45 @@ const { error } = await supabase
 
   const handleOpenEditModal = (part: PartProduct) => {
     const isScreen = part.category === 'Screens';
-    const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier === 'Incell' ? (part.imageUrl || part.image_url) : '');
-    const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier === 'OLED' ? (part.imageUrl || part.image_url) : '');
-    
+    const currentIncell = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier && part.screenTier.toLowerCase().includes('incell') ? (part.imageUrl || part.image_url) : '');
+    const currentOled = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier && part.screenTier.toLowerCase().includes('oled') ? (part.imageUrl || part.image_url) : '');
+
     setEditingPart(part);
     setPartForm({
       name: part.name || '',
       category: part.category,
       subCategory: part.subCategory || '',
       screenTier: part.screenTier || '',
-      incellPriceUGX: part.incellPriceUGX || 0,
-      oledPriceUGX: part.oledPriceUGX || 0,
-      oemPriceUGX: part.oemPriceUGX || 0,
-      priceUGX: part.priceUGX || 0,
+      incellPriceUGX: part.incellPriceUGX ?? 0,
+      oledPriceUGX: part.oledPriceUGX ?? 0,
+      oemPriceUGX: part.oemPriceUGX ?? 0,
+      priceUGX: part.priceUGX ?? 0,
       stockStatus: part.stockStatus || 'In Stock',
       compatibilityRange: part.compatibilityRange || '',
       description: part.description || '',
-      imageUrl: isScreen ? (oledImg || incellImg) : (part.imageUrl || part.image_url || ''),
-      incellImageUrl: incellImg,
-      oledImageUrl: oledImg,
-    } as any);
-  }; // <--- THIS CLOSING BRACE WAS MISSING!
+      imageUrl: isScreen ? (currentOled || currentIncell || part.imageUrl || part.image_url || '') : (part.imageUrl || part.image_url || ''),
+      incellImageUrl: currentIncell || '',
+      oledImageUrl: currentOled || '',
+    });
+  };
 
   const handleSavePart = () => {
     if (!partForm.name.trim()) return;
 
     const isScreen = partForm.category === 'Screens';
-    const incellImg = isScreen ? (partForm.incellImageUrl || '') : '';
-    const oledImg = isScreen ? (partForm.oledImageUrl || '') : '';
-    const primaryImg = isScreen ? (oledImg || incellImg) : (partForm.imageUrl || '');
+    const fallbackPrimary = editingPart?.imageUrl || editingPart?.image_url || '';
+    const fallbackIncell = editingPart?.incellImageUrl || editingPart?.incell_image_url || '';
+    const fallbackOled = editingPart?.oledImageUrl || editingPart?.oled_image_url || '';
+
+    const keepExisting = (nextValue?: string, fallbackValue?: string) => {
+      const trimmedNext = nextValue?.trim() ?? '';
+      const trimmedFallback = fallbackValue?.trim() ?? '';
+      return trimmedNext || trimmedFallback || '';
+    };
+
+    const incellImg = isScreen ? keepExisting(partForm.incellImageUrl, fallbackIncell) : '';
+    const oledImg = isScreen ? keepExisting(partForm.oledImageUrl, fallbackOled) : '';
+    const primaryImg = isScreen ? keepExisting(oledImg || partForm.imageUrl, fallbackPrimary || incellImg) : keepExisting(partForm.imageUrl, fallbackPrimary);
 
     const updatedForm = {
       ...partForm,
@@ -495,7 +513,7 @@ const { error } = await supabase
     }
   };
 
-  const handleQuickStatusChange = (part: PartProduct, newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock') => {
+  const handleQuickStatusChange = (part: PartProduct, newStatus: PartProduct['stockStatus']) => {
     onUpdatePart({
       ...part,
       stockStatus: newStatus,
@@ -1038,7 +1056,7 @@ const { error } = await supabase
                       onChange={(e) =>
                         setPartForm({
                           ...partForm,
-                          category: e.target.value as any,
+                          category: e.target.value as PartProduct['category'],
                         })
                       }
                       className={`w-full p-3 rounded-xl text-xs font-bold border focus:outline-none focus:border-[#1D9BB5] ${
@@ -1062,7 +1080,7 @@ const { error } = await supabase
                       onChange={(e) =>
                         setPartForm({
                           ...partForm,
-                          stockStatus: e.target.value as any,
+                          stockStatus: e.target.value as PartProduct['stockStatus'],
                         })
                       }
                       className={`w-full p-3 rounded-xl text-xs font-bold border focus:outline-none focus:border-[#1D9BB5] ${

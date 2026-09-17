@@ -32,26 +32,18 @@ const DEFAULT_INCELL_SCREEN_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://
 const DEFAULT_OLED_SCREEN_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='350' viewBox='0 0 600 350'><rect width='600' height='350' fill='%23030712' rx='16'/><rect x='190' y='20' width='220' height='310' rx='28' fill='%230f172a' stroke='%2306b6d4' stroke-width='4'/><rect x='206' y='40' width='188' height='270' rx='18' fill='%23000000'/><path d='M250 40 h100 v10 h-100 z' fill='%230f172a'/><circle cx='300' cy='165' r='60' fill='%2306b6d4' fill-opacity='0.18'/><text x='300' y='160' font-family='sans-serif' font-weight='900' font-size='22' fill='%2322d3ee' text-anchor='middle'>OLED (DD)</text><text x='300' y='185' font-family='sans-serif' font-weight='700' font-size='12' fill='%2338bdf8' text-anchor='middle'>SUPER RETINA XDR</text><rect x='215' y='295' width='170' height='24' rx='6' fill='%230284c7'/><text x='300' y='311' font-family='sans-serif' font-weight='800' font-size='11' fill='%23ffffff' text-anchor='middle'>OEM SOFT OLED FLEX</text></svg>";
 
 function getScreenDisplayImage(part: PartProduct, tier: 'Incell' | 'OLED'): string {
-  const slug = part.id.replace('part-screen-', '');
+  const tierName = String(tier || 'OLED').toLowerCase();
+  const isIncellTier = tierName.includes('incell');
+  const tierKey: 'incell' | 'oled' = isIncellTier ? 'incell' : 'oled';
 
-  // Check custom uploads first: prefer explicit upload/data/custom URL
-  const incellCandidate = part.incell_image_url || part.incellImageUrl;
-  const oledCandidate = part.oled_image_url || part.oledImageUrl;
+  const incellCandidate = part.incell_image_url || part.incellImageUrl || part.image_url || part.imageUrl;
+  const oledCandidate = part.oled_image_url || part.oledImageUrl || part.image_url || part.imageUrl;
   const mainCandidate = part.image_url || part.imageUrl;
 
-  const customIncell = sanitizeImageUrl(incellCandidate, part.id, 'incell');
-  const customOled = sanitizeImageUrl(oledCandidate, part.id, 'oled');
+  const tierImage = isIncellTier ? sanitizeImageUrl(incellCandidate, part.id, 'incell') : sanitizeImageUrl(oledCandidate, part.id, 'oled');
   const mainImage = sanitizeImageUrl(mainCandidate, part.id, 'main');
 
-  if (tier === 'Incell') {
-    if (customIncell) return customIncell;
-    if (part.screenTier === 'Incell' && mainImage) return mainImage;
-    return `/images/parts/part-screen-${slug}-incell.png`;
-  } else {
-    if (customOled) return customOled;
-    if (part.screenTier === 'OLED' && mainImage) return mainImage;
-    return `/images/parts/part-screen-${slug}-oled.png`;
-  }
+  return tierImage || mainImage || (isIncellTier ? DEFAULT_INCELL_SCREEN_IMAGE : DEFAULT_OLED_SCREEN_IMAGE);
 }
 
 interface PartsProductsSectionProps {
@@ -615,19 +607,25 @@ if (sortBy === 'price-desc') {
                 const isOutOfStock = part.stockStatus === 'Out of Stock';
 
                 // Check for custom uploaded image (for batteries, back glasses, housing, etc.)
-                const customProductImage = sanitizeImageUrl(part.imageUrl || part.image_url, part.id, 'main');
+                const customProductImage = sanitizeImageUrl(part.image_url || part.imageUrl, part.id, 'main');
                 const hasCustomPhoto = Boolean(customProductImage);
 
                 // For Screens: We show screen display image. For other items: ONLY render photo container if a real custom image exists!
                 const shouldRenderImage = isScreen || hasCustomPhoto;
 
-               const partAny = part as any;
-const isInCell = String(currentTier).toLowerCase() === 'incell';
-const tierImage = isInCell
-  ? (partAny.incell_image_url || partAny.incellImageUrl)
-  : (partAny.oled_image_url || partAny.oledImageUrl);
-
-const displayImage: string = (isScreen ? tierImage : '') || customProductImage || '';
+                const normalizedTierName = String(currentTier || 'OLED').toLowerCase();
+                const isIncellTier = normalizedTierName.includes('incell');
+                const tierKey: 'incell' | 'oled' = isIncellTier ? 'incell' : 'oled';
+                const tierImage = isIncellTier
+                  ? part.incell_image_url || part.incellImageUrl || part.image_url || part.imageUrl
+                  : part.oled_image_url || part.oledImageUrl || part.image_url || part.imageUrl;
+                const displayImage = sanitizeImageUrl(tierImage, part.id, tierKey)
+                  || sanitizeImageUrl(part.image_url || part.imageUrl, part.id, 'main')
+                  || (isScreen
+                    ? isIncellTier
+                      ? DEFAULT_INCELL_SCREEN_IMAGE
+                      : DEFAULT_OLED_SCREEN_IMAGE
+                    : '');
                 const whatsappText = isOutOfStock
                   ? `Hello iPhone Lab UG, I am inquiring about: ${part.name} (${
                       isScreen ? currentTier + ' Tier' : ''

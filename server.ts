@@ -156,10 +156,28 @@ function cleanText(str: any, maxLen = 1000): string {
 function cleanImageUrl(str: any): string {
   if (typeof str !== 'string') return '';
   const trimmed = str.trim();
-  if (trimmed.startsWith('data:image/')) {
+  if (!trimmed) return '';
+  if (trimmed.startsWith('data:image/') || trimmed.startsWith('blob:') || trimmed.startsWith('/')) {
     return trimmed;
   }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return trimmed;
+      }
+    } catch {
+      return '';
+    }
+  }
   return cleanText(trimmed, 5000);
+}
+
+function preserveExistingImageValue(nextValue: string | undefined, fallbackValue: string | undefined): string {
+  const cleanNext = cleanImageUrl(nextValue);
+  if (cleanNext) return cleanNext;
+  const cleanFallback = cleanImageUrl(fallbackValue);
+  return cleanFallback;
 }
 
 // Security: IP Rate Limiter for Public Forms
@@ -292,26 +310,26 @@ async function startServer() {
 
       let incellImg = existing.incellImageUrl || existing.incell_image_url || '';
       if (req.body.incellImageUrl !== undefined) {
-        incellImg = cleanImageUrl(req.body.incellImageUrl);
+        incellImg = preserveExistingImageValue(req.body.incellImageUrl, existing.incellImageUrl || existing.incell_image_url || '');
       } else if (req.body.incell_image_url !== undefined) {
-        incellImg = cleanImageUrl(req.body.incell_image_url);
+        incellImg = preserveExistingImageValue(req.body.incell_image_url, existing.incellImageUrl || existing.incell_image_url || '');
       }
 
       let oledImg = existing.oledImageUrl || existing.oled_image_url || '';
       if (req.body.oledImageUrl !== undefined) {
-        oledImg = cleanImageUrl(req.body.oledImageUrl);
+        oledImg = preserveExistingImageValue(req.body.oledImageUrl, existing.oledImageUrl || existing.oled_image_url || '');
       } else if (req.body.oled_image_url !== undefined) {
-        oledImg = cleanImageUrl(req.body.oled_image_url);
+        oledImg = preserveExistingImageValue(req.body.oled_image_url, existing.oledImageUrl || existing.oled_image_url || '');
       }
 
       let primaryImg = '';
       if (isScreen) {
-        primaryImg = oledImg || incellImg || (req.body.imageUrl ? cleanImageUrl(req.body.imageUrl) : (existing.imageUrl || existing.image_url || ''));
+        primaryImg = preserveExistingImageValue(oledImg || incellImg || (req.body.imageUrl ?? req.body.image_url), existing.imageUrl || existing.image_url || '');
       } else {
         if (req.body.imageUrl !== undefined) {
-          primaryImg = cleanImageUrl(req.body.imageUrl);
+          primaryImg = preserveExistingImageValue(req.body.imageUrl, existing.imageUrl || existing.image_url || '');
         } else if (req.body.image_url !== undefined) {
-          primaryImg = cleanImageUrl(req.body.image_url);
+          primaryImg = preserveExistingImageValue(req.body.image_url, existing.imageUrl || existing.image_url || '');
         } else {
           primaryImg = existing.imageUrl || existing.image_url || '';
         }

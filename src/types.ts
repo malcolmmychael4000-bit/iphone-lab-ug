@@ -18,7 +18,7 @@ export interface PartProduct {
   name: string;
   category: PartCategory;
   subCategory?: string;
-  screenTier?: 'Incell (JH)' | 'OLED (DD)' | 'Both' | string;
+  screenTier?: 'Incell (JH)' | 'OLED (DD)' | 'Both' | 'InCell' | 'OLED' | string;
   incellPriceUGX?: number;
   oledPriceUGX?: number;
   oemPriceUGX?: number;
@@ -26,12 +26,12 @@ export interface PartProduct {
   compatibilityRange: string;
   stockStatus: 'In Stock' | 'Low Stock' | 'Limited Stock' | 'Pre-Order' | 'Out of Stock';
   description?: string;
-  image_url?: string;
-  imageUrl?: string;
-  incellImageUrl?: string;
-  incell_image_url?: string;
-  oledImageUrl?: string;
-  oled_image_url?: string;
+  image_url?: string | null;
+  imageUrl?: string | null;
+  incell_image_url?: string | null;
+  incellImageUrl?: string | null;
+  oled_image_url?: string | null;
+  oledImageUrl?: string | null;
   created_at?: string;
 }
 
