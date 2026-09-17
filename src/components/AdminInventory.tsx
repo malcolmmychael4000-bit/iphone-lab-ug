@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase.ts';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -33,7 +32,7 @@ import {
 } from 'lucide-react';
 import { PartProduct } from '../types';
 import { formatUGX } from '../utils/format';
-import { saveStoredParts, getStoredParts, sanitizeImageUrl } from '../utils/catalogStorage';
+import { saveStoredParts, sanitizeImageUrl } from '../utils/catalogStorage';
 
 interface AdminInventoryProps {
   isDarkMode: boolean;
@@ -163,32 +162,39 @@ export const AdminInventory = (props: AdminInventoryProps) => {
         showToast('Local backup is empty.', 'error');
         return;
       }
+      const token = localStorage.getItem('iphone_lab_admin_token') || '';
 
-      // Map camelCase frontend fields to Supabase column names
-const formattedParts = cachedParts.map((p: any) => ({
-  id: p.id,
-  name: p.name,
-  category: p.category,
-  screen_tier: p.screenTier || p.screen_tier || null,
-  price_ugx: p.priceUGX || p.price_ugx || 0,
-  incell_price_ugx: p.incellPriceUGX || p.incell_price_ugx || null,
-  oled_price_ugx: p.oledPriceUGX || p.oled_price_ugx || null,
-  stock_status: p.stockStatus || p.stock_status || 'in_stock',
-  image_url: p.imageUrl || p.image_url || null,
-  description: p.description || null,
-  compatibility_range: p.compatibilityRange || p.compatibility_range || null,
-}));
+      // Map frontend fields to the canonical parts_products columns.
+      const formattedParts = cachedParts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        screen_tier: p.screenTier || null,
+        price_ugx: p.priceUGX || 0,
+        incell_price_ugx: p.incellPriceUGX || null,
+        oled_price_ugx: p.oledPriceUGX || null,
+        stock_status: p.stockStatus || 'In Stock',
+        image_url: p.imageUrl || p.image_url || null,
+        incell_image_url: p.incellImageUrl || p.incell_image_url || null,
+        oled_image_url: p.oledImageUrl || p.oled_image_url || null,
+        description: p.description || null,
+        compatibility_range: p.compatibilityRange || null,
+      }));
 
-const { error } = await supabase
-  .from('parts_inventory')
-  .upsert(formattedParts);
-
-      if (error) {
-        showToast('Failed to sync to Supabase: ' + error.message, 'error');
-      } else {
+        const response = await fetch('/api/admin/restore-inventory', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ parts: formattedParts }),
+        });
+        if (!response.ok) {
+          const data: { error?: string } = await response.json().catch(() => ({}));
+          throw new Error(data.error || `Restore failed (${response.status})`);
+        }
         showToast(`Successfully pushed ${cachedParts.length} products to Supabase cloud!`);
         if (onRefreshData) onRefreshData();
-      }
     } catch (err: any) {
       showToast('Recovery failed: ' + (err.message || 'Error'), 'error');
     }
@@ -395,32 +401,28 @@ const { error } = await supabase
 
       setIsUploadingImage(true);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      // Upload directly to Supabase Storage 'inventory' bucket
-      const { error: uploadError } = await supabase.storage
-        .from('inventory')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data } = supabase.storage
-        .from('inventory')
-        .getPublicUrl(filePath);
-
-      if (data?.publicUrl) {
-        setPartForm((prev: any) => ({
-          ...prev,
-          [fieldKey]: data.publicUrl,
-          imageUrl: fieldKey === 'imageUrl' ? data.publicUrl : (prev.imageUrl || data.publicUrl),
-        }));
-      }
-    } catch (err: any) {
-      console.error('Supabase upload error:', err);
-      alert('Image upload failed: ' + err.message);
+      const imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Could not read image'));
+        reader.onerror = () => reject(reader.error || new Error('Could not read image'));
+        reader.readAsDataURL(file);
+      });
+      const token = localStorage.getItem('iphone_lab_admin_token') || '';
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ imageBase64, filename: file.name }),
+      });
+      const data: { image_url?: string; error?: string } = await response.json();
+      if (!response.ok || !data.image_url) throw new Error(data.error || `Image upload failed (${response.status})`);
+      setPartForm((prev) => ({
+        ...prev,
+        [fieldKey]: data.image_url,
+        imageUrl: fieldKey === 'imageUrl' ? data.image_url : (prev.imageUrl || data.image_url),
+      }));
+    } catch (err) {
+      console.error('Image upload error:', err);
+      alert(`Image upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsUploadingImage(false);
     }

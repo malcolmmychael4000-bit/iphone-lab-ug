@@ -39,7 +39,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|images/|uploads/|favicon|.*\\..*).*)",
+      "source": "/((?!api/|assets/|images/|uploads/|favicon|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]

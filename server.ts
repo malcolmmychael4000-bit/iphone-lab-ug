@@ -9,8 +9,9 @@ import { Booking, ContactSubmission, PartProduct } from './src/types.js';
 
 // Setup Supabase Client if credentials exist
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+const PRODUCT_BUCKET = 'products';
 
 // Local JSON file persistence fallback path
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -159,7 +160,69 @@ function cleanImageUrl(str: any): string {
   if (trimmed.startsWith('data:image/')) {
     return trimmed;
   }
+
   return cleanText(trimmed, 5000);
+}
+
+function firstString(...values: unknown[]): string {
+  return values.find((value): value is string => typeof value === 'string' && value.trim().length > 0)?.trim() || '';
+}
+
+function normalizePart(row: Record<string, unknown>): PartProduct {
+  const imageUrl = firstString(row.image_url, row.imageUrl);
+  const incellImageUrl = firstString(row.incell_image_url, row.incellImageUrl);
+  const oledImageUrl = firstString(row.oled_image_url, row.oledImageUrl);
+  return {
+    id: String(row.id || `part-${Date.now()}`),
+    name: String(row.name || ''),
+    category: String(row.category || 'Accessories') as PartProduct['category'],
+    subCategory: firstString(row.sub_category, row.subCategory, row.subcategory) || undefined,
+    screenTier: firstString(row.screen_tier, row.screenTier, row.screentier) || undefined,
+    incellPriceUGX: Number(row.incell_price_ugx ?? row.incellPriceUGX ?? row.incellpriceugx) || undefined,
+    oledPriceUGX: Number(row.oled_price_ugx ?? row.oledPriceUGX ?? row.oledpriceugx) || undefined,
+    oemPriceUGX: Number(row.oem_price_ugx ?? row.oemPriceUGX ?? row.oempriceugx) || undefined,
+    priceUGX: Number(row.price_ugx ?? row.priceUGX ?? row.priceugx ?? 0),
+    compatibilityRange: firstString(row.compatibility_range, row.compatibilityRange, row.compatibilityrange) || 'iPhone Series',
+    stockStatus: firstString(row.stock_status, row.stockStatus, row.stockstatus) as PartProduct['stockStatus'] || 'In Stock',
+    description: firstString(row.description) || undefined,
+    image_url: imageUrl,
+    imageUrl,
+    incell_image_url: incellImageUrl,
+    incellImageUrl,
+    oled_image_url: oledImageUrl,
+    oledImageUrl,
+    created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+  };
+}
+
+function toSupabasePart(part: Record<string, unknown>, existing?: PartProduct): Record<string, unknown> {
+  const normalized = normalizePart({ ...existing, ...part });
+  const imageUrl = firstString(part.image_url, part.imageUrl, existing?.image_url, existing?.imageUrl);
+  const incellImageUrl = firstString(part.incell_image_url, part.incellImageUrl, existing?.incell_image_url, existing?.incellImageUrl);
+  const oledImageUrl = firstString(part.oled_image_url, part.oledImageUrl, existing?.oled_image_url, existing?.oledImageUrl);
+  return {
+    id: normalized.id,
+    name: cleanText(normalized.name, 200),
+    category: cleanText(normalized.category, 100),
+    sub_category: normalized.subCategory || null,
+    screen_tier: normalized.screenTier || null,
+    incell_price_ugx: normalized.incellPriceUGX ?? null,
+    oled_price_ugx: normalized.oledPriceUGX ?? null,
+    oem_price_ugx: normalized.oemPriceUGX ?? null,
+    price_ugx: normalized.priceUGX ?? 0,
+    compatibility_range: cleanText(normalized.compatibilityRange, 200),
+    stock_status: cleanText(normalized.stockStatus, 50),
+    description: normalized.description ? cleanText(normalized.description, 2000) : null,
+    image_url: cleanImageUrl(imageUrl),
+    incell_image_url: cleanImageUrl(incellImageUrl),
+    oled_image_url: cleanImageUrl(oledImageUrl),
+  };
+}
+
+function requireSupabase(res: Response): boolean {
+  if (supabase) return true;
+  res.status(503).json({ error: 'Supabase is not configured; inventory cannot be persisted.' });
+  return false;
 }
 
 // Security: IP Rate Limiter for Public Forms
@@ -223,53 +286,31 @@ async function startServer() {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('parts_products').select('*').order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          return res.json(data);
+        if (!error && data) {
+          return res.json(data.map((row) => normalizePart(row as Record<string, unknown>)));
         }
+        if (error) console.error('Supabase inventory read failed:', error.message);
       } catch (err) {
-        console.warn('Supabase fetch failed, falling back to store:', err);
+        console.error('Supabase inventory read failed:', err);
       }
     }
-    res.json(memoryStore.parts);
+    res.json(memoryStore.parts.map((part) => normalizePart(part as unknown as Record<string, unknown>)));
   });
 
   // POST / PUT Parts (Admin Protected)
   app.post('/api/parts', verifyAdmin, async (req: Request, res: Response) => {
     try {
-      const isScreen = req.body.category === 'Screens';
-      const incellImg = cleanImageUrl(req.body.incell_image_url || req.body.incellImageUrl || '');
-      const oledImg = cleanImageUrl(req.body.oled_image_url || req.body.oledImageUrl || '');
-      const primaryImg = isScreen
-        ? (oledImg || incellImg)
-        : cleanImageUrl(req.body.image_url || req.body.imageUrl || '');
-
-      const newPart: PartProduct = {
-        id: req.body.id || `part-${Date.now()}`,
-        name: cleanText(req.body.name || 'New iPhone Part', 200),
-        category: cleanText(req.body.category || 'Screens', 100) as any,
-        subCategory: cleanText(req.body.subCategory || '', 100),
-        screenTier: req.body.screenTier ? cleanText(req.body.screenTier, 100) as any : undefined,
-        incellPriceUGX: req.body.incellPriceUGX ? Number(req.body.incellPriceUGX) : undefined,
-        oledPriceUGX: req.body.oledPriceUGX ? Number(req.body.oledPriceUGX) : undefined,
-        priceUGX: Number(req.body.priceUGX || 0),
-        compatibilityRange: cleanText(req.body.compatibilityRange || 'iPhone Series', 200),
-        stockStatus: cleanText(req.body.stockStatus || 'In Stock', 50) as any,
-        description: cleanText(req.body.description || '', 2000),
-        image_url: primaryImg,
-        imageUrl: primaryImg,
-        incell_image_url: incellImg,
-        incellImageUrl: incellImg,
-        oled_image_url: oledImg,
-        oledImageUrl: oledImg,
-        created_at: new Date().toISOString()
-      };
-
-      const existingIdx = memoryStore.parts.findIndex(p => p.id === newPart.id);
-      if (existingIdx >= 0) {
-        memoryStore.parts[existingIdx] = newPart;
-      } else {
-        memoryStore.parts.unshift(newPart);
+      if (!requireSupabase(res)) return;
+      const payload = toSupabasePart(req.body);
+      const { data, error } = await supabase!.from('parts_products').upsert(payload, { onConflict: 'id' }).select().single();
+      if (error || !data) {
+        console.error('Supabase inventory insert failed:', error?.message);
+        return res.status(502).json({ error: error?.message || 'Inventory insert returned no row' });
       }
+      const newPart = normalizePart(data as Record<string, unknown>);
+      const existingIdx = memoryStore.parts.findIndex((p) => p.id === newPart.id);
+      if (existingIdx >= 0) memoryStore.parts[existingIdx] = newPart;
+      else memoryStore.parts.unshift(newPart);
       saveStore(memoryStore);
 
       return res.json({ success: true, part: newPart });
@@ -281,60 +322,19 @@ async function startServer() {
 
   app.put('/api/parts/:id', verifyAdmin, async (req: Request, res: Response) => {
     try {
+      if (!requireSupabase(res)) return;
       const { id } = req.params;
       const existingIdx = memoryStore.parts.findIndex(p => p.id === id);
-      if (existingIdx === -1) {
-        return res.status(404).json({ error: 'Part not found' });
+      const existing = existingIdx >= 0 ? memoryStore.parts[existingIdx] : undefined;
+      const payload = toSupabasePart({ ...req.body, id }, existing);
+      const { data, error } = await supabase!.from('parts_products').upsert(payload, { onConflict: 'id' }).select().single();
+      if (error || !data) {
+        console.error('Supabase inventory update failed:', error?.message);
+        return res.status(error?.code === 'PGRST116' ? 404 : 502).json({ error: error?.message || 'Inventory update returned no row' });
       }
-
-      const existing = memoryStore.parts[existingIdx];
-      const isScreen = (req.body.category || existing.category) === 'Screens';
-
-      let incellImg = existing.incellImageUrl || existing.incell_image_url || '';
-      if (req.body.incellImageUrl !== undefined) {
-        incellImg = cleanImageUrl(req.body.incellImageUrl);
-      } else if (req.body.incell_image_url !== undefined) {
-        incellImg = cleanImageUrl(req.body.incell_image_url);
-      }
-
-      let oledImg = existing.oledImageUrl || existing.oled_image_url || '';
-      if (req.body.oledImageUrl !== undefined) {
-        oledImg = cleanImageUrl(req.body.oledImageUrl);
-      } else if (req.body.oled_image_url !== undefined) {
-        oledImg = cleanImageUrl(req.body.oled_image_url);
-      }
-
-      let primaryImg = '';
-      if (isScreen) {
-        primaryImg = oledImg || incellImg || (req.body.imageUrl ? cleanImageUrl(req.body.imageUrl) : (existing.imageUrl || existing.image_url || ''));
-      } else {
-        if (req.body.imageUrl !== undefined) {
-          primaryImg = cleanImageUrl(req.body.imageUrl);
-        } else if (req.body.image_url !== undefined) {
-          primaryImg = cleanImageUrl(req.body.image_url);
-        } else {
-          primaryImg = existing.imageUrl || existing.image_url || '';
-        }
-      }
-
-      const updated: PartProduct = {
-        ...existing,
-        ...req.body,
-        name: req.body.name ? cleanText(req.body.name, 200) : existing.name,
-        category: req.body.category ? cleanText(req.body.category, 100) as any : existing.category,
-        description: req.body.description !== undefined ? cleanText(req.body.description, 2000) : existing.description,
-        priceUGX: req.body.priceUGX !== undefined ? Number(req.body.priceUGX) : existing.priceUGX,
-        incellPriceUGX: req.body.incellPriceUGX !== undefined ? Number(req.body.incellPriceUGX) : existing.incellPriceUGX,
-        oledPriceUGX: req.body.oledPriceUGX !== undefined ? Number(req.body.oledPriceUGX) : existing.oledPriceUGX,
-        image_url: primaryImg,
-        imageUrl: primaryImg,
-        incell_image_url: incellImg,
-        incellImageUrl: incellImg,
-        oled_image_url: oledImg,
-        oledImageUrl: oledImg,
-      };
-
-      memoryStore.parts[existingIdx] = updated;
+      const updated = normalizePart(data as Record<string, unknown>);
+      if (existingIdx >= 0) memoryStore.parts[existingIdx] = updated;
+      else memoryStore.parts.unshift(updated);
       saveStore(memoryStore);
 
       return res.json({ success: true, part: updated });
@@ -352,10 +352,7 @@ async function startServer() {
         return res.status(400).json({ error: 'No image data provided' });
       }
 
-      const customDir = path.join(process.cwd(), 'public', 'images', 'custom');
-      if (!fs.existsSync(customDir)) {
-        fs.mkdirSync(customDir, { recursive: true });
-      }
+      if (!requireSupabase(res)) return;
 
       // Determine extension and mime type
       let ext = 'png';
@@ -378,38 +375,17 @@ async function startServer() {
       const buffer = Buffer.from(rawBase64, 'base64');
       const safeName = (filename || 'image').replace(/[^\w.-]/g, '_').replace(/\.[^.]+$/, '');
       const uniqueName = `custom_${Date.now()}_${safeName}.${ext}`;
-      const diskPath = path.join(customDir, uniqueName);
-
-      fs.writeFileSync(diskPath, buffer);
-      const localPublicUrl = `/images/custom/${uniqueName}`;
-
-      // If Supabase client exists, also upload to Supabase Storage bucket 'products'
-      if (supabase) {
-        try {
-          const filePath = `inventory/${uniqueName}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(filePath, buffer, {
-              contentType,
-              upsert: true,
-            });
-
-          if (!uploadError && uploadData) {
-            const { data: publicUrlData } = supabase.storage
-              .from('products')
-              .getPublicUrl(filePath);
-            
-            if (publicUrlData?.publicUrl) {
-              return res.json({ success: true, image_url: publicUrlData.publicUrl, local_url: localPublicUrl });
-            }
-          }
-        } catch (supabaseErr) {
-          console.warn('Supabase storage upload fallback to local URL:', supabaseErr);
-        }
+      const filePath = `inventory/${uniqueName}`;
+      const { data: uploadData, error: uploadError } = await supabase!.storage
+        .from(PRODUCT_BUCKET)
+        .upload(filePath, buffer, { contentType, upsert: true });
+      if (uploadError || !uploadData) {
+        console.error('Supabase storage upload failed:', uploadError?.message);
+        return res.status(502).json({ error: uploadError?.message || 'Supabase storage upload returned no object' });
       }
-
-      // Return static local url (fast, permanent)
-      return res.json({ success: true, image_url: localPublicUrl });
+      const { data: publicUrlData } = supabase!.storage.from(PRODUCT_BUCKET).getPublicUrl(filePath);
+      if (!publicUrlData.publicUrl) return res.status(502).json({ error: 'Supabase storage did not return a public URL' });
+      return res.json({ success: true, image_url: publicUrlData.publicUrl });
     } catch (err: any) {
       console.error('Image upload error:', err);
       res.status(500).json({ error: 'Failed to process image upload: ' + (err.message || 'Unknown') });
@@ -431,22 +407,20 @@ async function startServer() {
   // Restore Full Inventory Backup (Admin Protected)
   app.post('/api/admin/restore-inventory', verifyAdmin, async (req: Request, res: Response) => {
     try {
+      if (!requireSupabase(res)) return;
       const { parts } = req.body;
       if (!Array.isArray(parts) || parts.length === 0) {
         return res.status(400).json({ error: 'Invalid parts payload for restore' });
       }
 
-      memoryStore.parts = parts;
-      saveStore(memoryStore);
-
-      // Sync to Supabase if connected
-      if (supabase) {
-        try {
-          await supabase.from('parts_products').upsert(parts, { onConflict: 'id' });
-        } catch (supaErr) {
-          console.warn('Supabase upsert warning during restore:', supaErr);
-        }
+      const payload = parts.map((part: Record<string, unknown>) => toSupabasePart(part));
+      const { data, error } = await supabase!.from('parts_products').upsert(payload, { onConflict: 'id' }).select();
+      if (error || !data) {
+        console.error('Supabase inventory restore failed:', error?.message);
+        return res.status(502).json({ error: error?.message || 'Inventory restore returned no rows' });
       }
+      memoryStore.parts = data.map((row) => normalizePart(row as Record<string, unknown>));
+      saveStore(memoryStore);
 
       return res.json({
         success: true,
@@ -461,17 +435,15 @@ async function startServer() {
   });
 
   app.delete('/api/parts/:id', verifyAdmin, async (req: Request, res: Response) => {
+    if (!requireSupabase(res)) return;
     const { id } = req.params;
+    const { error } = await supabase!.from('parts_products').delete().eq('id', id);
+    if (error) {
+      console.error('Supabase inventory delete failed:', error.message);
+      return res.status(502).json({ error: error.message });
+    }
     memoryStore.parts = memoryStore.parts.filter(p => p.id !== id);
     saveStore(memoryStore);
-
-    if (supabase) {
-      try {
-        await supabase.from('parts_products').delete().eq('id', id);
-      } catch (e) {
-        console.warn('Supabase delete part warning:', e);
-      }
-    }
 
     res.json({ success: true, id });
   });

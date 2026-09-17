@@ -163,7 +163,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isDarkMode, onBackToMain
           body: JSON.stringify({ imageBase64: base64Str, filename: file.name }),
         });
         const data = await res.json();
-        const finalUrl = res.ok && data.image_url ? data.image_url : base64Str;
+        if (!res.ok || !data.image_url) {
+          throw new Error(data.error || `Image upload failed (${res.status})`);
+        }
+        const finalUrl = data.image_url;
         setEditingPart((prev) =>
           prev
             ? {
@@ -174,17 +177,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isDarkMode, onBackToMain
               }
             : null
         );
-      } catch {
-        setEditingPart((prev) =>
-          prev
-            ? {
-                ...prev,
-                [fieldKey]: base64Str,
-                image_url: prev.image_url || base64Str,
-                imageUrl: prev.imageUrl || base64Str,
-              }
-            : null
-        );
+      } catch (error) {
+        setToastMessage(error instanceof Error ? error.message : 'Image upload failed');
       } finally {
         setUploadingImage(false);
       }
@@ -314,7 +308,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isDarkMode, onBackToMain
       let loadedParts: PartProduct[] = [];
       if (resP.status === 'fulfilled' && resP.value.ok && (resP.value.headers.get('content-type') || '').includes('application/json')) {
         const pData = await resP.value.json();
-        loadedParts = mergeWithStoredParts(Array.isArray(pData) && pData.length > 0 ? pData : INITIAL_PARTS);
+        loadedParts = Array.isArray(pData) && pData.length > 0 ? pData : mergeWithStoredParts(INITIAL_PARTS);
       } else {
         loadedParts = mergeWithStoredParts(INITIAL_PARTS);
       }
@@ -397,12 +391,19 @@ const primaryImg = editingPart.image_url || editingPart.imageUrl || oledImg || i
       const url = isAddingPart ? '/api/parts' : `/api/parts/${editingPart.id}`;
 
       try {
-        await fetch(url, {
+        const response = await fetch(url, {
           method,
           headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(partToSave),
         });
-      } catch {}
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || `Inventory save failed (${response.status})`);
+        }
+      } catch (error) {
+        setToastMessage(error instanceof Error ? error.message : 'Inventory save failed');
+        await loadAdminData();
+      }
     } catch (err) {
       console.error('Error saving part:', err);
     }
@@ -416,11 +417,15 @@ const primaryImg = editingPart.image_url || editingPart.imageUrl || oledImg || i
       saveStoredParts(updatedParts);
 
       try {
-        await fetch(`/api/parts/${id}`, {
+        const response = await fetch(`/api/parts/${id}`, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });
-      } catch {}
+        if (!response.ok) throw new Error(`Inventory delete failed (${response.status})`);
+      } catch (error) {
+        setToastMessage(error instanceof Error ? error.message : 'Inventory delete failed');
+        await loadAdminData();
+      }
     } catch (err) {
       console.error('Error deleting part:', err);
     }
@@ -432,13 +437,18 @@ const primaryImg = editingPart.image_url || editingPart.imageUrl || oledImg || i
     setParts(updatedList);
     saveStoredParts(updatedList);
     try {
-      await fetch(`/api/parts/${updatedPart.id}`, {
+      const response = await fetch(`/api/parts/${updatedPart.id}`, {
         method: 'PUT',
         headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(updatedPart),
       });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Inventory update failed (${response.status})`);
+      }
     } catch (err) {
-      console.warn('Background update part note:', err);
+      setToastMessage(err instanceof Error ? err.message : 'Inventory update failed');
+      await loadAdminData();
     }
   };
 
@@ -451,12 +461,19 @@ const primaryImg = editingPart.image_url || editingPart.imageUrl || oledImg || i
     setParts(updatedList);
     saveStoredParts(updatedList);
     try {
-      await fetch('/api/parts', {
+      const response = await fetch('/api/parts', {
         method: 'POST',
         headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(newPart),
       });
-    } catch {}
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Inventory create failed (${response.status})`);
+      }
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : 'Inventory create failed');
+      await loadAdminData();
+    }
   };
 
   const handleReseed = async () => {
