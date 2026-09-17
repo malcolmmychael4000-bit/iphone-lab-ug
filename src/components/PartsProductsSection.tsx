@@ -35,9 +35,15 @@ function getScreenDisplayImage(part: PartProduct, tier: 'Incell' | 'OLED'): stri
   const slug = part.id.replace('part-screen-', '');
 
   // Check custom uploads first: prefer explicit upload/data/custom URL
-  const incellCandidate = part.incell_image_url || part.incellImageUrl;
-  const oledCandidate = part.oled_image_url || part.oledImageUrl;
-  const mainCandidate = part.image_url || part.imageUrl;
+  const incellCandidate = [part.incell_image_url, part.incellImageUrl].find(
+    (value) => typeof value === 'string' && value.trim(),
+  );
+  const oledCandidate = [part.oled_image_url, part.oledImageUrl].find(
+    (value) => typeof value === 'string' && value.trim(),
+  );
+  const mainCandidate = [part.image_url, part.imageUrl].find(
+    (value) => typeof value === 'string' && value.trim(),
+  );
 
   const customIncell = sanitizeImageUrl(incellCandidate, part.id, 'incell');
   const customOled = sanitizeImageUrl(oledCandidate, part.id, 'oled');
@@ -621,13 +627,23 @@ if (sortBy === 'price-desc') {
                 // For Screens: We show screen display image. For other items: ONLY render photo container if a real custom image exists!
                 const shouldRenderImage = isScreen || hasCustomPhoto;
 
-               const partAny = part as any;
-const isInCell = String(currentTier).toLowerCase() === 'incell';
-const tierImage = isInCell
-  ? (partAny.incell_image_url || partAny.incellImageUrl)
-  : (partAny.oled_image_url || partAny.oledImageUrl);
+                const displayImage: string = isScreen
+                  ? getScreenDisplayImage(part, currentTier)
+                  : customProductImage || '';
 
-const displayImage: string = (isScreen ? tierImage : '') || customProductImage || '';
+                if (isScreen) {
+                  console.log('[Screen image diagnostics]', {
+                    productId: part.id,
+                    title: part.name,
+                    selectedTier: currentTier,
+                    incell_image_url: part.incell_image_url,
+                    oled_image_url: part.oled_image_url,
+                    image_url: part.image_url,
+                    incellImageUrl: part.incellImageUrl,
+                    oledImageUrl: part.oledImageUrl,
+                    displayImage,
+                  });
+                }
                 const whatsappText = isOutOfStock
                   ? `Hello iPhone Lab UG, I am inquiring about: ${part.name} (${
                       isScreen ? currentTier + ' Tier' : ''
