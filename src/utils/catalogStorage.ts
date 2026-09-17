@@ -178,39 +178,12 @@ export function mergeWithStoredParts(serverParts: PartProduct[]): PartProduct[] 
 
   const storedMap = new Map(stored.map((p) => [p.id, p]));
 
-  const isGeneric = (url?: string) => !url || url.startsWith('/images/parts/') || url.endsWith('.svg');
-
-  const resolveUrl = (customUrl?: string, serverUrl?: string) => {
-    if (customUrl && !isGeneric(customUrl)) return customUrl;
-    if (serverUrl && !isGeneric(serverUrl)) return serverUrl;
-    return customUrl || serverUrl || '';
-  };
-
-  const merged = serverParts.map((sp) => {
-    const custom = storedMap.get(sp.id);
-    if (!custom) return sp;
-
-    const finalImg = resolveUrl(custom.imageUrl || custom.image_url, sp.imageUrl || sp.image_url);
-    const finalIncell = resolveUrl(custom.incellImageUrl || custom.incell_image_url, sp.incellImageUrl || sp.incell_image_url);
-    const finalOled = resolveUrl(custom.oledImageUrl || custom.oled_image_url, sp.oledImageUrl || sp.oled_image_url);
-
-    return {
-      ...sp,
-      ...custom,
-      imageUrl: finalImg,
-      image_url: finalImg,
-      incellImageUrl: finalIncell,
-      incell_image_url: finalIncell,
-      oledImageUrl: finalOled,
-      oled_image_url: finalOled,
-    };
-  });
-
   // Preserve any new custom parts added via Admin that are not in default server list
   const serverIds = new Set(serverParts.map((p) => p.id));
   const additionalCustomParts = stored.filter((p) => !serverIds.has(p.id));
 
-  return [...merged, ...additionalCustomParts];
+  // A successful server response is canonical. Local data is only an offline
+  // source for parts that the server does not know about yet.
+  return [...serverParts, ...additionalCustomParts];
 }
-
 

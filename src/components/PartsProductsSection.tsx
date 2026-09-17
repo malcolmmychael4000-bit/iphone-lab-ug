@@ -106,8 +106,7 @@ export const PartsProductsSection: React.FC<PartsProductsSectionProps> = ({
       if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const merged = mergeWithStoredParts(data);
-          setParts(merged);
+          setParts(data);
           return;
         }
       }
