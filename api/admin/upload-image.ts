@@ -1,4 +1,4 @@
-import { getSupabase, PRODUCT_BUCKET, requireAdmin, sendError } from '../_lib/inventory';
+import { getSupabase, PRODUCT_BUCKET, requireAdmin, sendError } from '../_lib/inventory.js';
 
 interface Request {
   headers: Record<string, string | string[] | undefined>;

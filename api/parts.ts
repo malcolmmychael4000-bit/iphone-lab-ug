@@ -1,4 +1,4 @@
-import { getPublicSupabase, getSupabase, normalizePart, requireAdmin, sendError, toSupabasePart } from './_lib/inventory';
+import { getPublicSupabase, getSupabase, normalizePart, requireAdmin, sendError, toSupabasePart } from './_lib/inventory.js';
 
 interface Request {
   method?: string;
