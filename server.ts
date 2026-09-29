@@ -4,6 +4,7 @@ import fs from 'fs';
 import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
+import { getInventoryColumns, INVENTORY_TABLE, normalizePart, toSupabasePart } from './api/_lib/inventory.js';
 import { INITIAL_PARTS, INITIAL_SERVICES } from './src/data/seedData.js';
 import { Booking, ContactSubmission, PartProduct } from './src/types.js';
 
@@ -164,59 +165,19 @@ function cleanImageUrl(str: any): string {
   return cleanText(trimmed, 5000);
 }
 
-function firstString(...values: unknown[]): string {
-  return values.find((value): value is string => typeof value === 'string' && value.trim().length > 0)?.trim() || '';
-}
-
-function normalizePart(row: Record<string, unknown>): PartProduct {
-  const imageUrl = firstString(row.image_url, row.imageUrl);
-  const incellImageUrl = firstString(row.incell_image_url, row.incellImageUrl);
-  const oledImageUrl = firstString(row.oled_image_url, row.oledImageUrl);
-  return {
-    id: String(row.id || `part-${Date.now()}`),
-    name: String(row.name || ''),
-    category: String(row.category || 'Accessories') as PartProduct['category'],
-    subCategory: firstString(row.sub_category, row.subCategory, row.subcategory) || undefined,
-    screenTier: firstString(row.screen_tier, row.screenTier, row.screentier) || undefined,
-    incellPriceUGX: Number(row.incell_price_ugx ?? row.incellPriceUGX ?? row.incellpriceugx) || undefined,
-    oledPriceUGX: Number(row.oled_price_ugx ?? row.oledPriceUGX ?? row.oledpriceugx) || undefined,
-    oemPriceUGX: Number(row.oem_price_ugx ?? row.oemPriceUGX ?? row.oempriceugx) || undefined,
-    priceUGX: Number(row.price_ugx ?? row.priceUGX ?? row.priceugx ?? 0),
-    compatibilityRange: firstString(row.compatibility_range, row.compatibilityRange, row.compatibilityrange) || 'iPhone Series',
-    stockStatus: firstString(row.stock_status, row.stockStatus, row.stockstatus) as PartProduct['stockStatus'] || 'In Stock',
-    description: firstString(row.description) || undefined,
-    image_url: imageUrl,
-    imageUrl,
-    incell_image_url: incellImageUrl,
-    incellImageUrl,
-    oled_image_url: oledImageUrl,
-    oledImageUrl,
-    created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
-  };
-}
-
-function toSupabasePart(part: Record<string, unknown>, existing?: PartProduct): Record<string, unknown> {
-  const normalized = normalizePart({ ...existing, ...part });
-  const imageUrl = firstString(part.image_url, part.imageUrl, existing?.image_url, existing?.imageUrl);
-  const incellImageUrl = firstString(part.incell_image_url, part.incellImageUrl, existing?.incell_image_url, existing?.incellImageUrl);
-  const oledImageUrl = firstString(part.oled_image_url, part.oledImageUrl, existing?.oled_image_url, existing?.oledImageUrl);
-  return {
-    id: normalized.id,
-    name: cleanText(normalized.name, 200),
-    category: cleanText(normalized.category, 100),
-    sub_category: normalized.subCategory || null,
-    screen_tier: normalized.screenTier || null,
-    incell_price_ugx: normalized.incellPriceUGX ?? null,
-    oled_price_ugx: normalized.oledPriceUGX ?? null,
-    oem_price_ugx: normalized.oemPriceUGX ?? null,
-    price_ugx: normalized.priceUGX ?? 0,
-    compatibility_range: cleanText(normalized.compatibilityRange, 200),
-    stock_status: cleanText(normalized.stockStatus, 50),
-    description: normalized.description ? cleanText(normalized.description, 2000) : null,
-    image_url: cleanImageUrl(imageUrl),
-    incell_image_url: cleanImageUrl(incellImageUrl),
-    oled_image_url: cleanImageUrl(oledImageUrl),
-  };
+function sanitizeInventoryPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(payload).map(([key, value]) => {
+    if (typeof value !== 'string') return [key, value];
+    const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase();
+    if (normalizedKey.includes('imageurl')) return [key, cleanImageUrl(value)];
+    const maxLength = normalizedKey === 'name' ? 200
+      : normalizedKey === 'category' ? 100
+      : normalizedKey === 'compatibilityrange' ? 200
+      : normalizedKey === 'stockstatus' ? 50
+      : normalizedKey === 'description' ? 2000
+      : 1000;
+    return [key, cleanText(value, maxLength)];
+  }));
 }
 
 function requireSupabase(res: Response): boolean {
@@ -285,7 +246,7 @@ async function startServer() {
   app.get('/api/parts', async (req: Request, res: Response) => {
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('parts_products').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabase.from(INVENTORY_TABLE).select('*');
         if (!error && data) {
           return res.json(data.map((row) => normalizePart(row as Record<string, unknown>)));
         }
@@ -301,8 +262,16 @@ async function startServer() {
   app.post('/api/parts', verifyAdmin, async (req: Request, res: Response) => {
     try {
       if (!requireSupabase(res)) return;
-      const payload = toSupabasePart(req.body);
-      const { data, error } = await supabase!.from('parts_products').upsert(payload, { onConflict: 'id' }).select().single();
+      const columns = await getInventoryColumns(supabase!);
+      const partId = typeof req.body.id === 'string' ? req.body.id : '';
+      const { data: existing, error: readError } = partId
+        ? await supabase!.from(INVENTORY_TABLE).select('*').eq('id', partId).maybeSingle()
+        : { data: null, error: null };
+      if (readError) throw readError;
+      const payload = sanitizeInventoryPayload(
+        toSupabasePart(req.body, (existing as Record<string, unknown> | null) || undefined, columns),
+      );
+      const { data, error } = await supabase!.from(INVENTORY_TABLE).upsert(payload, { onConflict: 'id' }).select().single();
       if (error || !data) {
         console.error('Supabase inventory insert failed:', error?.message);
         return res.status(502).json({ error: error?.message || 'Inventory insert returned no row' });
@@ -325,9 +294,13 @@ async function startServer() {
       if (!requireSupabase(res)) return;
       const { id } = req.params;
       const existingIdx = memoryStore.parts.findIndex(p => p.id === id);
-      const existing = existingIdx >= 0 ? memoryStore.parts[existingIdx] : undefined;
-      const payload = toSupabasePart({ ...req.body, id }, existing);
-      const { data, error } = await supabase!.from('parts_products').upsert(payload, { onConflict: 'id' }).select().single();
+      const { data: existing, error: readError } = await supabase!.from(INVENTORY_TABLE).select('*').eq('id', id).maybeSingle();
+      if (readError) throw readError;
+      const columns = existing ? Object.keys(existing) : await getInventoryColumns(supabase!);
+      const payload = sanitizeInventoryPayload(
+        toSupabasePart({ ...req.body, id }, (existing as Record<string, unknown> | null) || undefined, columns),
+      );
+      const { data, error } = await supabase!.from(INVENTORY_TABLE).upsert(payload, { onConflict: 'id' }).select().single();
       if (error || !data) {
         console.error('Supabase inventory update failed:', error?.message);
         return res.status(error?.code === 'PGRST116' ? 404 : 502).json({ error: error?.message || 'Inventory update returned no row' });
@@ -413,8 +386,14 @@ async function startServer() {
         return res.status(400).json({ error: 'Invalid parts payload for restore' });
       }
 
-      const payload = parts.map((part: Record<string, unknown>) => toSupabasePart(part));
-      const { data, error } = await supabase!.from('parts_products').upsert(payload, { onConflict: 'id' }).select();
+      const { data: currentRows, error: readError } = await supabase!.from(INVENTORY_TABLE).select('*');
+      if (readError) throw readError;
+      const columns = currentRows?.[0] ? Object.keys(currentRows[0]) : await getInventoryColumns(supabase!);
+      const currentById = new Map((currentRows || []).map((row) => [String(row.id), row as Record<string, unknown>]));
+      const payload = parts.map((part: Record<string, unknown>) =>
+        sanitizeInventoryPayload(toSupabasePart(part, currentById.get(String(part.id)), columns)),
+      );
+      const { data, error } = await supabase!.from(INVENTORY_TABLE).upsert(payload, { onConflict: 'id' }).select();
       if (error || !data) {
         console.error('Supabase inventory restore failed:', error?.message);
         return res.status(502).json({ error: error?.message || 'Inventory restore returned no rows' });
@@ -437,7 +416,7 @@ async function startServer() {
   app.delete('/api/parts/:id', verifyAdmin, async (req: Request, res: Response) => {
     if (!requireSupabase(res)) return;
     const { id } = req.params;
-    const { error } = await supabase!.from('parts_products').delete().eq('id', id);
+    const { error } = await supabase!.from(INVENTORY_TABLE).delete().eq('id', id);
     if (error) {
       console.error('Supabase inventory delete failed:', error.message);
       return res.status(502).json({ error: error.message });

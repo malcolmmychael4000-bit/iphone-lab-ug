@@ -1,4 +1,12 @@
-import { getPublicSupabase, getSupabase, normalizePart, requireAdmin, sendError, toSupabasePart } from './_lib/inventory.js';
+import {
+  getInventoryColumns,
+  getSupabase,
+  INVENTORY_TABLE,
+  normalizePart,
+  requireAdmin,
+  sendError,
+  toSupabasePart,
+} from './_lib/inventory.js';
 
 interface Request {
   method?: string;
@@ -14,8 +22,9 @@ interface Response {
 export default async function handler(req: Request, res: Response): Promise<void> {
   try {
     if (req.method === 'GET') {
-      const supabase = getPublicSupabase();
-      const { data, error } = await supabase.from('parts_products').select('*').order('created_at', { ascending: false });
+      // This public API route runs server-side; avoid RLS returning a silent empty result for anon reads.
+      const supabase = getSupabase();
+      const { data, error } = await supabase.from(INVENTORY_TABLE).select('*');
       if (error) throw error;
       res.status(200).json((data || []).map((row) => normalizePart(row as Record<string, unknown>)));
       return;
@@ -26,7 +35,16 @@ export default async function handler(req: Request, res: Response): Promise<void
       res.status(405).json({ error: 'Method not allowed' });
       return;
     }
-    const { data, error } = await supabase.from('parts_products').upsert(toSupabasePart(req.body || {}), { onConflict: 'id' }).select().single();
+    const partId = typeof req.body?.id === 'string' ? req.body.id : '';
+    const { data: existing, error: readError } = partId
+      ? await supabase.from(INVENTORY_TABLE).select('*').eq('id', partId).maybeSingle()
+      : { data: null, error: null };
+    if (readError) throw readError;
+    const columns = existing ? Object.keys(existing) : await getInventoryColumns(supabase);
+    const { data, error } = await supabase.from(INVENTORY_TABLE)
+      .upsert(toSupabasePart(req.body || {}, (existing as Record<string, unknown> | null) || undefined, columns), { onConflict: 'id' })
+      .select()
+      .single();
     if (error || !data) throw error || new Error('Inventory save returned no row');
     res.status(200).json({ success: true, part: normalizePart(data as Record<string, unknown>) });
   } catch (error) {

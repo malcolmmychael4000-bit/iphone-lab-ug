@@ -1,7 +1,7 @@
 // Supabase Database Schema & Types for iPhone Lab UG
 // Compatible with PostgreSQL / Supabase Real-Time Client
 
-export interface PartsProductsTable {
+export interface PartsInventoryTable {
   id: string; // primary key UUID or text
   name: string; // e.g., 'iPhone 13 Pro Max OLED Display'
   category: 'Screens' | 'Batteries' | 'Back Glasses' | 'Housings' | 'Camera Glasses' | 'Screen Guards' | 'Accessories';
@@ -23,8 +23,8 @@ export interface PartsProductsTable {
   updated_at?: string;
 }
 
-/** @deprecated Use PartsProductsTable; retained for local service compatibility. */
-export type PartsInventoryTable = PartsProductsTable;
+/** @deprecated Use PartsInventoryTable; retained for local service compatibility. */
+export type PartsProductsTable = PartsInventoryTable;
 
 export interface RepairBookingsTable {
   id: string; // primary key
@@ -67,10 +67,10 @@ export interface ContactSubmissionsTable {
 export type Database = {
   public: {
     Tables: {
-          parts_products: {
-            Row: PartsProductsTable;
-            Insert: Omit<PartsProductsTable, 'created_at' | 'updated_at'>;
-            Update: Partial<Omit<PartsProductsTable, 'id'>>;
+          parts_inventory: {
+            Row: PartsInventoryTable;
+            Insert: Omit<PartsInventoryTable, 'created_at' | 'updated_at'>;
+            Update: Partial<Omit<PartsInventoryTable, 'id'>>;
       };
       repair_bookings: {
         Row: RepairBookingsTable;

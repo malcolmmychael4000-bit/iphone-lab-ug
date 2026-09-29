@@ -2,33 +2,33 @@
 -- Run this in your Supabase SQL Editor to enforce strict table and storage permissions.
 
 -- 1. Enable RLS on all tables
-ALTER TABLE IF EXISTS parts_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS parts_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS contact_submissions ENABLE ROW LEVEL SECURITY;
 
--- 2. POLICIES FOR `parts_products`
+-- 2. POLICIES FOR `parts_inventory`
 -- Anyone can view parts/inventory
-DROP POLICY IF EXISTS "Public read parts" ON parts_products;
+DROP POLICY IF EXISTS "Public read parts" ON parts_inventory;
 CREATE POLICY "Public read parts" 
-  ON parts_products FOR SELECT 
+  ON parts_inventory FOR SELECT
   USING (true);
 
 -- Only authenticated admins can insert, update, or delete parts
-DROP POLICY IF EXISTS "Admin insert parts" ON parts_products;
+DROP POLICY IF EXISTS "Admin insert parts" ON parts_inventory;
 CREATE POLICY "Admin insert parts" 
-  ON parts_products FOR INSERT 
+  ON parts_inventory FOR INSERT
   TO authenticated 
   WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Admin update parts" ON parts_products;
+DROP POLICY IF EXISTS "Admin update parts" ON parts_inventory;
 CREATE POLICY "Admin update parts" 
-  ON parts_products FOR UPDATE 
+  ON parts_inventory FOR UPDATE
   TO authenticated 
   USING (true);
 
-DROP POLICY IF EXISTS "Admin delete parts" ON parts_products;
+DROP POLICY IF EXISTS "Admin delete parts" ON parts_inventory;
 CREATE POLICY "Admin delete parts" 
-  ON parts_products FOR DELETE 
+  ON parts_inventory FOR DELETE
   TO authenticated 
   USING (true);
 

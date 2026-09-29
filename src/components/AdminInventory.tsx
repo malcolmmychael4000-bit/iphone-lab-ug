@@ -130,16 +130,13 @@ export const AdminInventory = (props: AdminInventoryProps) => {
           body: JSON.stringify({ parts: importedParts }),
         });
 
-        if (res.ok) {
-          saveStoredParts(importedParts);
-          showToast(`Successfully restored ${importedParts.length} products & screen PNGs!`);
-          if (onRefreshData) onRefreshData();
-        } else {
-          // Client fallback: apply to state directly
-          saveStoredParts(importedParts);
-          importedParts.forEach((p) => onUpdatePart(p));
-          showToast(`Restored ${importedParts.length} products to active session!`);
+        if (!res.ok) {
+          const data: { error?: string } = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Restore failed (${res.status})`);
         }
+        saveStoredParts(importedParts);
+        showToast(`Successfully restored ${importedParts.length} products & screen PNGs!`);
+        if (onRefreshData) onRefreshData();
       } catch (err: any) {
         showToast('Error reading backup file: ' + (err.message || 'Invalid JSON'), 'error');
       } finally {
@@ -164,30 +161,13 @@ export const AdminInventory = (props: AdminInventoryProps) => {
       }
       const token = localStorage.getItem('iphone_lab_admin_token') || '';
 
-      // Map frontend fields to the canonical parts_products columns.
-      const formattedParts = cachedParts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        screen_tier: p.screenTier || null,
-        price_ugx: p.priceUGX || 0,
-        incell_price_ugx: p.incellPriceUGX || null,
-        oled_price_ugx: p.oledPriceUGX || null,
-        stock_status: p.stockStatus || 'In Stock',
-        image_url: p.imageUrl || p.image_url || null,
-        incell_image_url: p.incellImageUrl || p.incell_image_url || null,
-        oled_image_url: p.oledImageUrl || p.oled_image_url || null,
-        description: p.description || null,
-        compatibility_range: p.compatibilityRange || null,
-      }));
-
         const response = await fetch('/api/admin/restore-inventory', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ parts: formattedParts }),
+          body: JSON.stringify({ parts: cachedParts }),
         });
         if (!response.ok) {
           const data: { error?: string } = await response.json().catch(() => ({}));

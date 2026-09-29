@@ -18,3 +18,9 @@ View your app in AI Studio: https://ai.studio/apps/6724294b-155f-4ff0-8f86-5736b
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Inventory data
+
+`public.parts_inventory` is the canonical inventory table used by the public catalog and admin API. The older `parts_products` table is not read or written by the app; it is left untouched so any legacy data there is not discarded.
+
+The inventory API recognizes snake_case and PostgreSQL-folded camelCase column names. Inventory image URLs remain in the `products` Supabase Storage bucket and are kept when an edit or restore payload omits them. Running `supabase_setup.sql` creates or adds optional canonical columns without deleting existing inventory rows or image files.

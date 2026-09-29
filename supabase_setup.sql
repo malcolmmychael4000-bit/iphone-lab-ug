@@ -11,8 +11,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 2. TABLE DEFINITIONS
 -- --------------------------------------------------------------------
 
--- Parts & Products / Repair Parts Inventory
-CREATE TABLE IF NOT EXISTS parts_products (
+-- Canonical public inventory table. Existing parts_inventory rows are retained.
+CREATE TABLE IF NOT EXISTS parts_inventory (
   id TEXT PRIMARY KEY DEFAULT concat('part-', extract(epoch from now())::bigint),
   name TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('Screens', 'Batteries', 'Back Glasses', 'Housings', 'Camera Glasses', 'Screen Guards', 'Accessories')),
@@ -31,25 +31,17 @@ CREATE TABLE IF NOT EXISTS parts_products (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Migrate installations created by older versions of this file. PostgreSQL
--- folds the old unquoted camelCase identifiers to lowercase names.
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS sub_category TEXT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS screen_tier TEXT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS incell_price_ugx BIGINT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS oled_price_ugx BIGINT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS oem_price_ugx BIGINT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS price_ugx BIGINT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS compatibility_range TEXT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS stock_status TEXT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS incell_image_url TEXT;
-ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS oled_image_url TEXT;
-
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'parts_products' AND column_name = 'subcategory') THEN
-    EXECUTE 'UPDATE parts_products SET sub_category = COALESCE(sub_category, subcategory), screen_tier = COALESCE(screen_tier, screentier), incell_price_ugx = COALESCE(incell_price_ugx, incellpriceugx), oled_price_ugx = COALESCE(oled_price_ugx, oledpriceugx), price_ugx = COALESCE(price_ugx, priceugx), compatibility_range = COALESCE(compatibility_range, compatibilityrange), stock_status = COALESCE(stock_status, stockstatus)';
-  END IF;
-END $$;
+-- Add current columns without removing older columns or changing existing data.
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS sub_category TEXT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS screen_tier TEXT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS incell_price_ugx BIGINT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS oled_price_ugx BIGINT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS oem_price_ugx BIGINT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS price_ugx BIGINT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS compatibility_range TEXT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS stock_status TEXT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS incell_image_url TEXT;
+ALTER TABLE parts_inventory ADD COLUMN IF NOT EXISTS oled_image_url TEXT;
 
 -- Repair Bookings & Express Service Requests
 CREATE TABLE IF NOT EXISTS bookings (
@@ -85,19 +77,19 @@ ON CONFLICT (id) DO NOTHING;
 -- --------------------------------------------------------------------
 
 -- Enable RLS on all tables
-ALTER TABLE parts_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parts_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_submissions ENABLE ROW LEVEL SECURITY;
 
--- POLICIES FOR `parts_products`
-DROP POLICY IF EXISTS "Public read inventory" ON parts_products;
+-- POLICIES FOR `parts_inventory`
+DROP POLICY IF EXISTS "Public read inventory" ON parts_inventory;
 CREATE POLICY "Public read inventory"
-  ON parts_products FOR SELECT
+  ON parts_inventory FOR SELECT
   USING (true);
 
-DROP POLICY IF EXISTS "Admin full control on inventory" ON parts_products;
+DROP POLICY IF EXISTS "Admin full control on inventory" ON parts_inventory;
 CREATE POLICY "Admin full control on inventory"
-  ON parts_products FOR ALL
+  ON parts_inventory FOR ALL
   TO authenticated
   USING (true)
   WITH CHECK (true);
