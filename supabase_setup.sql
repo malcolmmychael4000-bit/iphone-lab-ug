@@ -16,17 +16,40 @@ CREATE TABLE IF NOT EXISTS parts_products (
   id TEXT PRIMARY KEY DEFAULT concat('part-', extract(epoch from now())::bigint),
   name TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('Screens', 'Batteries', 'Back Glasses', 'Housings', 'Camera Glasses', 'Screen Guards', 'Accessories')),
-  subCategory TEXT,
-  screenTier TEXT,
-  incellPriceUGX BIGINT,
-  oledPriceUGX BIGINT,
-  priceUGX BIGINT NOT NULL DEFAULT 0,
-  compatibilityRange TEXT NOT NULL DEFAULT 'iPhone Series',
-  stockStatus TEXT NOT NULL DEFAULT 'In Stock' CHECK (stockStatus IN ('In Stock', 'Limited Stock', 'Pre-Order', 'Out of Stock')),
+  sub_category TEXT,
+  screen_tier TEXT,
+  incell_price_ugx BIGINT,
+  oled_price_ugx BIGINT,
+  oem_price_ugx BIGINT,
+  price_ugx BIGINT NOT NULL DEFAULT 0,
+  compatibility_range TEXT NOT NULL DEFAULT 'iPhone Series',
+  stock_status TEXT NOT NULL DEFAULT 'In Stock' CHECK (stock_status IN ('In Stock', 'Low Stock', 'Limited Stock', 'Pre-Order', 'Out of Stock')),
   description TEXT,
   image_url TEXT,
+  incell_image_url TEXT,
+  oled_image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migrate installations created by older versions of this file. PostgreSQL
+-- folds the old unquoted camelCase identifiers to lowercase names.
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS sub_category TEXT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS screen_tier TEXT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS incell_price_ugx BIGINT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS oled_price_ugx BIGINT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS oem_price_ugx BIGINT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS price_ugx BIGINT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS compatibility_range TEXT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS stock_status TEXT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS incell_image_url TEXT;
+ALTER TABLE parts_products ADD COLUMN IF NOT EXISTS oled_image_url TEXT;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'parts_products' AND column_name = 'subcategory') THEN
+    EXECUTE 'UPDATE parts_products SET sub_category = COALESCE(sub_category, subcategory), screen_tier = COALESCE(screen_tier, screentier), incell_price_ugx = COALESCE(incell_price_ugx, incellpriceugx), oled_price_ugx = COALESCE(oled_price_ugx, oledpriceugx), price_ugx = COALESCE(price_ugx, priceugx), compatibility_range = COALESCE(compatibility_range, compatibilityrange), stock_status = COALESCE(stock_status, stockstatus)';
+  END IF;
+END $$;
 
 -- Repair Bookings & Express Service Requests
 CREATE TABLE IF NOT EXISTS bookings (
