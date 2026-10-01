@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { MapPin, Phone, MessageSquare, Send, Clock, CheckCircle2, Video, AlertCircle } from 'lucide-react';
 import { sanitizeInput, sanitizePhone } from '../utils/sanitize';
 import { buildWhatsAppLink } from '../utils/format';
+import { buildGoogleMapsEmbedUrl } from '../utils/googleMaps';
 
 interface ContactSectionProps {
   isDarkMode: boolean;
@@ -195,7 +196,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
               {showLiveMap ? (
                 <iframe
                   title="iPhone Lab UG Location Map at New Pioneer Mall Kampala"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.758810967396!2d32.5776937!3d0.3142!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMKKwMTgnMTEuMSJOIDMywrAzNCwzOS43"
+                  src={buildGoogleMapsEmbedUrl()}
                   width="600"
                   height="300"
                   style={{ border: 0, width: '100%', height: '100%' }}
