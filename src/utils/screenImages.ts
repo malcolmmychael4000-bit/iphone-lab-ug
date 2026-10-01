@@ -20,18 +20,12 @@ export function getScreenImageCandidates(
   tier: ScreenTier,
   placeholder: string,
 ): string[] {
+  const incellImage = part.incell_image_url?.trim() || part.incellImageUrl?.trim();
+  const oledImage = part.oled_image_url?.trim() || part.oledImageUrl?.trim();
   const tierImage = tier === 'Incell'
-    ? part.incell_image_url || part.incellImageUrl
-    : part.oled_image_url || part.oledImageUrl;
-  const otherTierImage = tier === 'Incell'
-    ? part.oled_image_url || part.oledImageUrl
-    : part.incell_image_url || part.incellImageUrl;
-  const declaredTier = normalizeScreenTier(part.screenTier);
-  const primaryImage = !declaredTier
-    || declaredTier === tier
-    || (declaredTier === 'Both' && !otherTierImage)
-    ? part.image_url || part.imageUrl
-    : '';
+    ? incellImage
+    : oledImage;
+  const primaryImage = incellImage || oledImage ? '' : part.image_url?.trim() || part.imageUrl?.trim();
   const candidates = [
     sanitizeImageUrl(tierImage, part.id, tier === 'Incell' ? 'incell' : 'oled'),
     sanitizeImageUrl(primaryImage, part.id, 'main'),

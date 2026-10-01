@@ -28,10 +28,10 @@ test('prefers the selected tier image and keeps remote URLs intact', () => {
     image_url: 'https://images.example/primary.webp',
   }), 'Incell', 'data:image/svg+xml,placeholder');
 
-  assert.deepEqual(candidates, ['/images/incell.webp', 'https://images.example/primary.webp', 'data:image/svg+xml,placeholder']);
+  assert.deepEqual(candidates, ['/images/incell.webp', 'data:image/svg+xml,placeholder']);
 });
 
-test('falls back from a missing tier image to primary and then the tier placeholder', () => {
+test('falls back from missing tier images to primary only when both tier URLs are absent', () => {
   assert.deepEqual(
     getScreenImageCandidates(part({ screenTier: 'oLeD (DD)', imageUrl: '/images/primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
     ['/images/primary.webp', 'data:image/svg+xml,oled-placeholder'],
@@ -42,27 +42,38 @@ test('falls back from a missing tier image to primary and then the tier placehol
   );
 });
 
-test('does not use an ambiguous or opposite-tier primary image for another tier', () => {
+test('does not use the primary image when a tier-specific URL exists', () => {
   assert.deepEqual(
-    getScreenImageCandidates(part({ screenTier: 'InCell', imageUrl: '/images/incell.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    getScreenImageCandidates(part({ screenTier: 'InCell', imageUrl: '/images/primary.webp', incell_image_url: '/images/incell.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
     ['data:image/svg+xml,oled-placeholder'],
   );
-});
-
-test('uses the primary image as a generic fallback when neither tier image is available', () => {
   assert.deepEqual(
-    getScreenImageCandidates(part({ screenTier: 'Both', imageUrl: '/images/primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
-    ['/images/primary.webp', 'data:image/svg+xml,oled-placeholder'],
+    getScreenImageCandidates(part({ imageUrl: '/images/primary.webp', oledImageUrl: '/images/oled.webp' }), 'Incell', 'data:image/svg+xml,incell-placeholder'),
+    ['data:image/svg+xml,incell-placeholder'],
   );
 });
 
-test('does not use the other tier image as fallback when the selected tier image is missing', () => {
+test('keeps the selected tier image first and excludes primary when either tier URL exists', () => {
   assert.deepEqual(
     getScreenImageCandidates(part({
-      screenTier: 'Both',
-      imageUrl: '/images/incell.webp',
-      incell_image_url: '/images/incell.webp',
+      imageUrl: '/images/primary.webp',
+      incellImageUrl: '/images/incell.webp',
+      oled_image_url: '/images/oled.webp',
     }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
-    ['data:image/svg+xml,oled-placeholder'],
+    ['/images/oled.webp', 'data:image/svg+xml,oled-placeholder'],
+  );
+  assert.deepEqual(
+    getScreenImageCandidates(part({
+      image_url: '/images/primary.webp',
+      oled_image_url: '/images/oled.webp',
+    }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    ['/images/oled.webp', 'data:image/svg+xml,oled-placeholder'],
+  );
+  assert.deepEqual(
+    getScreenImageCandidates(part({
+      imageUrl: '/images/primary.webp',
+      incell_image_url: '/images/incell.webp',
+    }), 'Incell', 'data:image/svg+xml,incell-placeholder'),
+    ['/images/incell.webp', 'data:image/svg+xml,incell-placeholder'],
   );
 });
