@@ -23,8 +23,13 @@ export function getScreenImageCandidates(
   const tierImage = tier === 'Incell'
     ? part.incell_image_url || part.incellImageUrl
     : part.oled_image_url || part.oledImageUrl;
+  const otherTierImage = tier === 'Incell'
+    ? part.oled_image_url || part.oledImageUrl
+    : part.incell_image_url || part.incellImageUrl;
   const declaredTier = normalizeScreenTier(part.screenTier);
-  const primaryImage = !declaredTier || declaredTier === tier
+  const primaryImage = !declaredTier
+    || declaredTier === tier
+    || (declaredTier === 'Both' && !otherTierImage)
     ? part.image_url || part.imageUrl
     : '';
   const candidates = [

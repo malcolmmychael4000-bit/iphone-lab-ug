@@ -44,11 +44,25 @@ test('falls back from a missing tier image to primary and then the tier placehol
 
 test('does not use an ambiguous or opposite-tier primary image for another tier', () => {
   assert.deepEqual(
-    getScreenImageCandidates(part({ screenTier: 'Both', imageUrl: '/images/incell-primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    getScreenImageCandidates(part({ screenTier: 'InCell', imageUrl: '/images/incell.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
     ['data:image/svg+xml,oled-placeholder'],
   );
+});
+
+test('uses the primary image as a generic fallback when neither tier image is available', () => {
   assert.deepEqual(
-    getScreenImageCandidates(part({ screenTier: 'InCell', imageUrl: '/images/incell.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    getScreenImageCandidates(part({ screenTier: 'Both', imageUrl: '/images/primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    ['/images/primary.webp', 'data:image/svg+xml,oled-placeholder'],
+  );
+});
+
+test('does not use the other tier image as fallback when the selected tier image is missing', () => {
+  assert.deepEqual(
+    getScreenImageCandidates(part({
+      screenTier: 'Both',
+      imageUrl: '/images/incell.webp',
+      incell_image_url: '/images/incell.webp',
+    }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
     ['data:image/svg+xml,oled-placeholder'],
   );
 });
