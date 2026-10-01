@@ -1,5 +1,6 @@
 import {
   getInventoryColumns,
+  getPublicSupabase,
   getSupabase,
   INVENTORY_TABLE,
   normalizePart,
@@ -22,8 +23,7 @@ interface Response {
 export default async function handler(req: Request, res: Response): Promise<void> {
   try {
     if (req.method === 'GET') {
-      // This public API route runs server-side; avoid RLS returning a silent empty result for anon reads.
-      const supabase = getSupabase();
+      const supabase = getPublicSupabase();
       const { data, error } = await supabase.from(INVENTORY_TABLE).select('*');
       if (error) throw error;
       res.status(200).json((data || []).map((row) => normalizePart(row as Record<string, unknown>)));

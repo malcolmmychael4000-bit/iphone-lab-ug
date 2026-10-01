@@ -1,6 +1,36 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizePart, toSupabasePart } from './inventory.js';
+import { getPublicSupabase, normalizePart, toSupabasePart } from './inventory.js';
+
+test('public inventory client only requires Supabase URL and anon key', () => {
+  const original = {
+    url: process.env.SUPABASE_URL,
+    viteUrl: process.env.VITE_SUPABASE_URL,
+    anonKey: process.env.SUPABASE_ANON_KEY,
+    viteAnonKey: process.env.VITE_SUPABASE_ANON_KEY,
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+  try {
+    process.env.SUPABASE_URL = 'https://inventory-test.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'public-anon-test-key';
+    delete process.env.VITE_SUPABASE_URL;
+    delete process.env.VITE_SUPABASE_ANON_KEY;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    assert.doesNotThrow(() => getPublicSupabase());
+  } finally {
+    if (original.url === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = original.url;
+    if (original.viteUrl === undefined) delete process.env.VITE_SUPABASE_URL;
+    else process.env.VITE_SUPABASE_URL = original.viteUrl;
+    if (original.anonKey === undefined) delete process.env.SUPABASE_ANON_KEY;
+    else process.env.SUPABASE_ANON_KEY = original.anonKey;
+    if (original.viteAnonKey === undefined) delete process.env.VITE_SUPABASE_ANON_KEY;
+    else process.env.VITE_SUPABASE_ANON_KEY = original.viteAnonKey;
+    if (original.serviceRoleKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = original.serviceRoleKey;
+  }
+});
 
 test('normalizes legacy lowercase inventory column names and keeps image URLs', () => {
   const part = normalizePart({

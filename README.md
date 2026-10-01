@@ -24,3 +24,5 @@ View your app in AI Studio: https://ai.studio/apps/6724294b-155f-4ff0-8f86-5736b
 `public.parts_inventory` is the canonical inventory table used by the public catalog and admin API. The older `parts_products` table is not read or written by the app; it is left untouched so any legacy data there is not discarded.
 
 The inventory API recognizes snake_case and PostgreSQL-folded camelCase column names. Inventory image URLs remain in the `products` Supabase Storage bucket and are kept when an edit or restore payload omits them. Running `supabase_setup.sql` creates or adds optional canonical columns without deleting existing inventory rows or image files.
+
+Public catalog reads require `SUPABASE_URL` and `SUPABASE_ANON_KEY` (or their `VITE_`-prefixed equivalents) in the deployment environment. Admin inventory writes and image uploads require the server-only `SUPABASE_SERVICE_ROLE_KEY`; never expose that key in client-side code.
