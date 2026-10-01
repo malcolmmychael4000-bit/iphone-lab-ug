@@ -28,7 +28,6 @@ export const BookingPage: React.FC<BookingPageProps> = ({
   onNavigate,
 }) => {
   const whatsappUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG, I would like to book a priority repair appointment at Shop PB86.'
   );
 

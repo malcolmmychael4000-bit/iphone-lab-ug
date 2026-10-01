@@ -5,7 +5,6 @@ import { buildWhatsAppLink } from '../utils/format';
 export const FloatingWhatsApp: React.FC = () => {
   const [showTooltip, setShowTooltip] = useState(true);
   const whatsappUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG! I need assistance with an iPhone repair or genuine part inquiry.'
   );
 

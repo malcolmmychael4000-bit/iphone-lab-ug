@@ -26,7 +26,6 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ isDarkMode, onNavigate }) => {
   const whatsappUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG, I am interested in repairing my iPhone at Shop PB86, Pioneer Mall.'
   );
 

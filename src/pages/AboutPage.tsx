@@ -27,7 +27,6 @@ interface AboutPageProps {
 
 export const AboutPage: React.FC<AboutPageProps> = ({ isDarkMode, onNavigate }) => {
   const whatsappUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG, I would like to learn more about your repair lab at Pioneer Mall.'
   );
 

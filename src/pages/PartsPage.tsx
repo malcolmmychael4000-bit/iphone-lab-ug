@@ -27,7 +27,6 @@ export const PartsPage: React.FC<PartsPageProps> = ({ isDarkMode, onNavigate }) 
   };
 
   const whatsappWholesaleUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG, I am a phone technician/shop owner inquiring about wholesale screen and battery supply in Kampala.'
   );
 

@@ -129,7 +129,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const whatsappUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG, I would like to inquire about an iPhone repair or genuine part.'
   );
 
