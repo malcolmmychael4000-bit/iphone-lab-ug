@@ -33,6 +33,7 @@ import {
 import { PartProduct } from '../types';
 import { formatUGX } from '../utils/format';
 import { saveStoredParts, sanitizeImageUrl } from '../utils/catalogStorage';
+import { prepareImageUploadBody, readImageUploadResponse } from '../utils/imageUpload';
 
 interface AdminInventoryProps {
   isDarkMode: boolean;
@@ -374,31 +375,20 @@ export const AdminInventory = (props: AdminInventoryProps) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      if (file.size > 25 * 1024 * 1024) {
-        alert('Image file is too large. Please select an image smaller than 25MB.');
-        return;
-      }
-
       setIsUploadingImage(true);
 
-      const imageBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Could not read image'));
-        reader.onerror = () => reject(reader.error || new Error('Could not read image'));
-        reader.readAsDataURL(file);
-      });
+      const requestBody = await prepareImageUploadBody(file);
       const token = localStorage.getItem('iphone_lab_admin_token') || '';
       const response = await fetch('/api/admin/upload-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ imageBase64, filename: file.name }),
+        body: requestBody,
       });
-      const data: { image_url?: string; error?: string } = await response.json();
-      if (!response.ok || !data.image_url) throw new Error(data.error || `Image upload failed (${response.status})`);
+      const imageUrl = await readImageUploadResponse(response);
       setPartForm((prev) => ({
         ...prev,
-        [fieldKey]: data.image_url,
-        imageUrl: fieldKey === 'imageUrl' ? data.image_url : (prev.imageUrl || data.image_url),
+        [fieldKey]: imageUrl,
+        imageUrl: fieldKey === 'imageUrl' ? imageUrl : (prev.imageUrl || imageUrl),
       }));
     } catch (err) {
       console.error('Image upload error:', err);
