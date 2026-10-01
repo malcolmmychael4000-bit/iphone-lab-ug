@@ -321,6 +321,9 @@ async function startServer() {
   app.post('/api/admin/upload-image', verifyAdmin, async (req: Request, res: Response) => {
     try {
       const { imageBase64, filename } = req.body;
+      if (Buffer.byteLength(JSON.stringify(req.body || {}), 'utf8') > 3 * 1024 * 1024) {
+        return res.status(413).json({ error: 'Image upload request is too large. Choose a smaller image and try again.' });
+      }
       if (!imageBase64) {
         return res.status(400).json({ error: 'No image data provided' });
       }

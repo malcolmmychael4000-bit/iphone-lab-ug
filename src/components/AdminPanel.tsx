@@ -35,6 +35,7 @@ import { Booking, ContactSubmission, PartProduct } from '../types';
 import { INITIAL_PARTS } from '../data/seedData';
 import { formatUGX } from '../utils/format';
 import { getStoredParts, mergeWithStoredParts, saveStoredParts, hydrateCatalogFromIdb } from '../utils/catalogStorage';
+import { uploadAdminImage } from '../utils/imageUpload';
 import { AdminInventory } from './AdminInventory';
 import { AdminSecurity } from './AdminSecurity';
 import { AdminResetPassword } from './AdminResetPassword';
@@ -101,89 +102,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isDarkMode, onBackToMain
 
     setUploadingImage(true);
     try {
-      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
-      const base64Str = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const rawUrl = ev.target?.result as string;
-          if (!rawUrl) return resolve('');
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 800;
-            let { width, height } = img;
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
+      const finalUrl = await uploadAdminImage(file, getAuthHeaders());
+      setEditingPart((prev) =>
+        prev
+          ? {
+              ...prev,
+              [fieldKey]: finalUrl,
+              image_url: prev.image_url || finalUrl,
+              imageUrl: prev.imageUrl || finalUrl,
             }
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return resolve(rawUrl);
-
-            if (isPng) {
-              // Preserve transparency for PNGs
-              ctx.clearRect(0, 0, width, height);
-              ctx.drawImage(img, 0, 0, width, height);
-              try {
-                const webp = canvas.toDataURL('image/webp', 0.88);
-                if (webp && webp.startsWith('data:image/webp')) {
-                  return resolve(webp);
-                }
-              } catch {}
-              resolve(canvas.toDataURL('image/png'));
-            } else {
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, width, height);
-              ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.85));
-            }
-          };
-          img.onerror = () => resolve(rawUrl);
-          img.src = rawUrl;
-        };
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-
-      if (!base64Str) {
-        setUploadingImage(false);
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/upload-image', {
-          method: 'POST',
-          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ imageBase64: base64Str, filename: file.name }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.image_url) {
-          throw new Error(data.error || `Image upload failed (${res.status})`);
-        }
-        const finalUrl = data.image_url;
-        setEditingPart((prev) =>
-          prev
-            ? {
-                ...prev,
-                [fieldKey]: finalUrl,
-                image_url: prev.image_url || finalUrl,
-                imageUrl: prev.imageUrl || finalUrl,
-              }
-            : null
-        );
-      } catch (error) {
-        setToastMessage(error instanceof Error ? error.message : 'Image upload failed');
-      } finally {
-        setUploadingImage(false);
-      }
+          : null
+      );
     } catch (err) {
-      console.error('File read error:', err);
+      setToastMessage(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
       setUploadingImage(false);
     }
   };

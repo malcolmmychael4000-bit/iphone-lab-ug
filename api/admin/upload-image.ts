@@ -13,6 +13,10 @@ interface Response {
 export default async function handler(req: Request, res: Response): Promise<void> {
   try {
     requireAdmin(req);
+    if (Buffer.byteLength(JSON.stringify(req.body || {}), 'utf8') > 3 * 1024 * 1024) {
+      res.status(413).json({ error: 'Image upload request is too large. Choose a smaller image and try again.' });
+      return;
+    }
     const imageBase64 = req.body?.imageBase64;
     if (!imageBase64?.startsWith('data:image/')) {
       res.status(400).json({ error: 'No valid image data provided' });
