@@ -108,6 +108,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isDarkMode, onBackToMain
           ? {
               ...prev,
               [fieldKey]: finalUrl,
+              ...(fieldKey === 'incell_image_url' ? { incellImageUrl: finalUrl } : {}),
+              ...(fieldKey === 'oled_image_url' ? { oledImageUrl: finalUrl } : {}),
               image_url: prev.image_url || finalUrl,
               imageUrl: prev.imageUrl || finalUrl,
             }

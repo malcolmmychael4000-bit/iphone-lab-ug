@@ -25,7 +25,9 @@ export function getScreenImageCandidates(
   const tierImage = tier === 'Incell'
     ? incellImage
     : oledImage;
-  const primaryImage = incellImage || oledImage ? '' : part.image_url?.trim() || part.imageUrl?.trim();
+  const primaryImage = incellImage || oledImage || normalizeScreenTier(part.screenTier) === 'Both'
+    ? ''
+    : part.image_url?.trim() || part.imageUrl?.trim();
   const candidates = [
     sanitizeImageUrl(tierImage, part.id, tier === 'Incell' ? 'incell' : 'oled'),
     sanitizeImageUrl(primaryImage, part.id, 'main'),

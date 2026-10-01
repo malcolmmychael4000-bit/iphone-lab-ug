@@ -78,6 +78,19 @@ function readField(row: Record<string, unknown>, aliases: readonly string[]): un
   return matchingKey === undefined ? undefined : row[matchingKey];
 }
 
+function readImageField(row: Record<string, unknown>, aliases: readonly string[]): string {
+  for (const alias of aliases) {
+    const value = row[alias];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  const matchingKey = Object.keys(row).find((key) =>
+    aliases.some((alias) => normalizedKey(key) === normalizedKey(alias))
+    && typeof row[key] === 'string'
+    && (row[key] as string).trim() !== '',
+  );
+  return matchingKey === undefined ? '' : String(row[matchingKey]).trim();
+}
+
 function hasField(row: Record<string, unknown>, aliases: readonly string[]): boolean {
   if (aliases.some((alias) =>
     Object.prototype.hasOwnProperty.call(row, alias) && row[alias] !== undefined && row[alias] !== null,
@@ -94,9 +107,9 @@ function firstString(...values: unknown[]): string {
 }
 
 export function normalizePart(row: Record<string, unknown>): InventoryPart {
-  const imageUrl = firstString(readField(row, FIELD_ALIASES.imageUrl));
-  const incellImageUrl = firstString(readField(row, FIELD_ALIASES.incellImageUrl));
-  const oledImageUrl = firstString(readField(row, FIELD_ALIASES.oledImageUrl));
+  const imageUrl = readImageField(row, FIELD_ALIASES.imageUrl);
+  const incellImageUrl = readImageField(row, FIELD_ALIASES.incellImageUrl);
+  const oledImageUrl = readImageField(row, FIELD_ALIASES.oledImageUrl);
   const numberField = (aliases: readonly string[]) => {
     const value = readField(row, aliases);
     return value === undefined || value === null || value === '' ? undefined : Number(value) || undefined;
@@ -183,6 +196,26 @@ export function toSupabasePart(
   const fieldAliases = Object.entries(FIELD_ALIASES) as [keyof typeof FIELD_ALIASES, readonly string[]][];
   const knownColumns = columns?.length ? columns : Object.keys(existing || {});
   const payload: Record<string, unknown> = {};
+
+  if (knownColumns.length > 0) {
+    const missingTierImageColumns = ([
+      ['incellImageUrl', normalized.incellImageUrl],
+      ['oledImageUrl', normalized.oledImageUrl],
+    ] as const)
+      .filter(([field, value]) =>
+        Boolean(value)
+        && !FIELD_ALIASES[field].some((alias) =>
+          knownColumns.some((known) => normalizedKey(known) === normalizedKey(alias)),
+        ),
+      )
+      .map(([field]) => field === 'incellImageUrl' ? 'incell_image_url' : 'oled_image_url');
+
+    if (missingTierImageColumns.length > 0) {
+      throw new Error(
+        `Inventory schema is missing ${missingTierImageColumns.join(' and ')}. Apply supabase_add_tier_image_columns.sql before saving these images.`,
+      );
+    }
+  }
 
   for (const [field, aliases] of fieldAliases) {
     const column = aliases.find((alias) =>
