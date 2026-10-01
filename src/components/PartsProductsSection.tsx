@@ -620,7 +620,7 @@ if (sortBy === 'price-desc') {
                   : `Hello iPhone Lab UG, I am inquiring about: ${part.name} (${
                       isScreen ? currentTier + ' Tier' : ''
                     } – Listed at ${formatUGX(activePrice ?? 0)}. Is this in stock at Shop PB86?`;
-                const whatsappUrl = buildWhatsAppLink('0753234218', whatsappText);
+                const whatsappUrl = buildWhatsAppLink(whatsappText);
 
                 return (
                   <article
@@ -901,7 +901,7 @@ if (sortBy === 'price-desc') {
               </p>
             </div>
             <a
-              href={buildWhatsAppLink('0730700368', 'Hello iPhone Lab, I am a repair technician interested in wholesale genuine iPhone parts supply in Kampala.')}
+              href={buildWhatsAppLink('Hello iPhone Lab, I am a repair technician interested in wholesale genuine iPhone parts supply in Kampala.')}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#D4A017] hover:bg-[#b88a12] text-black font-extrabold px-6 py-3 rounded-xl text-xs sm:text-sm whitespace-nowrap shadow-lg transition-transform hover:scale-105 active:scale-95"

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Wrench, Calendar, Smartphone, User, Phone, FileText, CheckCircle2, AlertCircle, Clock, ShieldCheck } from 'lucide-react';
 import { Booking } from '../types';
 import { sanitizeInput, sanitizePhone } from '../utils/sanitize';
+import { buildWhatsAppLink } from '../utils/format';
 
 interface BookingFormProps {
   isDarkMode: boolean;
@@ -242,9 +243,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <a
-                    href={`https://wa.me/256753234218?text=${encodeURIComponent(
+                    href={buildWhatsAppLink(
                       `Hello iPhone Lab, I submitted Booking ${submittedBooking.id} for ${submittedBooking.device_model} (${submittedBooking.service_type}). Confirming my arrival date.`
-                    )}`}
+                    )}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full sm:w-auto bg-[#1D9BB5] hover:bg-[#168197] text-white font-bold px-6 py-3.5 rounded-xl text-sm transition-all shadow-lg"
@@ -294,7 +295,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Mugisha Joel"
+                        placeholder="Enter Your Name"
                         className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
                           isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
                         }`}
@@ -318,7 +319,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         required
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="e.g. 0753 234 218"
+                        placeholder="Enter Your Number"
                         className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
                           isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
                         }`}
@@ -393,7 +394,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         rows={3}
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        placeholder="Describe the issue (e.g. 'Cracked screen after drop, touch working fine. Prefer OLED (DD) display option.')"
+                        placeholder="Your Message"
                         className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
                           isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
                         }`}

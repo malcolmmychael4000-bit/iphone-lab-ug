@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { MapPin, Phone, MessageSquare, Send, Clock, CheckCircle2, Video, AlertCircle } from 'lucide-react';
 import { sanitizeInput, sanitizePhone } from '../utils/sanitize';
+import { buildWhatsAppLink } from '../utils/format';
 
 interface ContactSectionProps {
   isDarkMode: boolean;
@@ -163,7 +164,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                 {/* Social & Messaging Action Buttons */}
                 <div className="grid grid-cols-2 gap-3 pt-3">
                   <a
-                    href="https://wa.me/256753234218?text=Hello%20iPhone%20Lab%20UG,%20I%20have%20an%20inquiry%20about%20a%20repair%20/%20parts."
+                    href={buildWhatsAppLink('Hello iPhone Lab UG, I have an inquiry about a repair / parts.')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-[#25D366] font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
@@ -295,7 +296,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Sarah Nalubega"
+                    placeholder="Enter Your Name"
                     className={`w-full px-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
                       isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
                     }`}
@@ -315,7 +316,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="e.g. 0730 700 368"
+                    placeholder="Enter Your Number"
                     className={`w-full px-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
                       isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
                     }`}
@@ -335,7 +336,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ isDarkMode }) =>
                     required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="e.g. How much is screen replacement for iPhone 14 Plus?"
+                    placeholder="Your Message"
                     className={`w-full px-4 py-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-[#1D9BB5] ${
                       isDarkMode ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900 shadow-xs'
                     }`}

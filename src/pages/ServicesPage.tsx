@@ -32,7 +32,6 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ isDarkMode, onNaviga
   };
 
   const whatsappUrl = buildWhatsAppLink(
-    '0753234218',
     'Hello iPhone Lab UG, I have a question about a specialized iPhone repair service at Pioneer Mall.'
   );
 
