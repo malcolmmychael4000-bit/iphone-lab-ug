@@ -9,7 +9,7 @@
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:inventory": "tsx --test api/_lib/inventory.test.ts src/utils/screenImages.test.ts src/utils/imageUpload.test.ts src/utils/format.test.ts"
+    "test:inventory": "tsx --test api/_lib/inventory.test.ts src/utils/screenImages.test.ts src/utils/imageUpload.test.ts src/utils/format.test.ts src/utils/googleMaps.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
