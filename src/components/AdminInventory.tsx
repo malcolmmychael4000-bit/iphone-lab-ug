@@ -34,6 +34,7 @@ import { PartProduct } from '../types';
 import { formatUGX } from '../utils/format';
 import { saveStoredParts, sanitizeImageUrl } from '../utils/catalogStorage';
 import { prepareImageUploadBody, readImageUploadResponse } from '../utils/imageUpload';
+import { normalizeScreenTier } from '../utils/screenImages';
 
 interface AdminInventoryProps {
   isDarkMode: boolean;
@@ -415,8 +416,9 @@ export const AdminInventory = (props: AdminInventoryProps) => {
 
   const handleOpenEditModal = (part: PartProduct) => {
     const isScreen = part.category === 'Screens';
-    const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && part.screenTier === 'Incell' ? (part.imageUrl || part.image_url) : '');
-    const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && part.screenTier === 'OLED' ? (part.imageUrl || part.image_url) : '');
+    const declaredTier = normalizeScreenTier(part.screenTier);
+    const incellImg = part.incellImageUrl || part.incell_image_url || (isScreen && declaredTier === 'Incell' ? (part.imageUrl || part.image_url) : '');
+    const oledImg = part.oledImageUrl || part.oled_image_url || (isScreen && declaredTier === 'OLED' ? (part.imageUrl || part.image_url) : '');
     
     setEditingPart(part);
     setPartForm({

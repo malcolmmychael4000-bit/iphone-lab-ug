@@ -42,6 +42,43 @@ test('falls back from missing tier images to primary only when both tier URLs ar
   );
 });
 
+test('does not label the primary image as either photo for a dual-tier screen without tier images', () => {
+  assert.deepEqual(
+    getScreenImageCandidates(
+      part({ screenTier: 'Both', imageUrl: '/images/primary.webp' }),
+      'Incell',
+      'data:image/svg+xml,incell-placeholder',
+    ),
+    ['data:image/svg+xml,incell-placeholder'],
+  );
+  assert.deepEqual(
+    getScreenImageCandidates(
+      part({ screenTier: 'InCell / OLED', imageUrl: '/images/primary.webp' }),
+      'OLED',
+      'data:image/svg+xml,oled-placeholder',
+    ),
+    ['data:image/svg+xml,oled-placeholder'],
+  );
+});
+
+test('selects distinct saved images for InCell and OLED tiers', () => {
+  const dualTierPart = part({
+    screenTier: 'Both',
+    image_url: '/images/primary.webp',
+    incell_image_url: '/images/incell.webp',
+    oled_image_url: '/images/oled.webp',
+  });
+
+  assert.deepEqual(
+    getScreenImageCandidates(dualTierPart, 'Incell', 'data:image/svg+xml,incell-placeholder'),
+    ['/images/incell.webp', 'data:image/svg+xml,incell-placeholder'],
+  );
+  assert.deepEqual(
+    getScreenImageCandidates(dualTierPart, 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    ['/images/oled.webp', 'data:image/svg+xml,oled-placeholder'],
+  );
+});
+
 test('does not use the primary image when a tier-specific URL exists', () => {
   assert.deepEqual(
     getScreenImageCandidates(part({ screenTier: 'InCell', imageUrl: '/images/primary.webp', incell_image_url: '/images/incell.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),

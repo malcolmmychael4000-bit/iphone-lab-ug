@@ -59,6 +59,68 @@ test('normalizes legacy lowercase inventory column names and keeps image URLs', 
   assert.equal(part.created_at, '2026-09-01T10:00:00Z');
 });
 
+test('normalizes and persists both tier images independently', () => {
+  const part = normalizePart({
+    id: 'part-dual-screen',
+    name: 'iPhone 11 Pro Max Screen',
+    category: 'Screens',
+    incell_image_url: '',
+    incellImageUrl: 'https://storage.example/incell.webp',
+    oled_image_url: 'https://storage.example/oled.webp',
+    oledImageUrl: '',
+  });
+  const payload = toSupabasePart({
+    ...part,
+    incell_image_url: '',
+    incellImageUrl: 'https://storage.example/incell.webp',
+    oled_image_url: 'https://storage.example/oled.webp',
+    oledImageUrl: '',
+  }, undefined, [
+    'id',
+    'name',
+    'category',
+    'incell_image_url',
+    'oled_image_url',
+  ]);
+
+  assert.equal(part.incell_image_url, 'https://storage.example/incell.webp');
+  assert.equal(part.oled_image_url, 'https://storage.example/oled.webp');
+  assert.equal(payload.incell_image_url, 'https://storage.example/incell.webp');
+  assert.equal(payload.oled_image_url, 'https://storage.example/oled.webp');
+});
+
+test('does not clear existing tier images when an update sends blank aliases', () => {
+  const payload = toSupabasePart({
+    id: 'part-dual-screen',
+    incell_image_url: '',
+    incellImageUrl: '',
+    oled_image_url: '',
+    oledImageUrl: '',
+  }, {
+    id: 'part-dual-screen',
+    incell_image_url: 'https://storage.example/old-incell.webp',
+    oled_image_url: 'https://storage.example/old-oled.webp',
+  }, [
+    'id',
+    'incell_image_url',
+    'oled_image_url',
+  ]);
+
+  assert.equal(payload.incell_image_url, 'https://storage.example/old-incell.webp');
+  assert.equal(payload.oled_image_url, 'https://storage.example/old-oled.webp');
+});
+
+test('does not silently drop tier image uploads when the table lacks tier columns', () => {
+  assert.throws(
+    () => toSupabasePart({
+      id: 'part-dual-screen',
+      incell_image_url: 'https://storage.example/incell.webp',
+      oled_image_url: 'https://storage.example/oled.webp',
+    }, undefined, ['id', 'image_url']),
+    /missing incell_image_url and oled_image_url/,
+  );
+});
+
 test('maps updates to the observed schema and preserves stored images', () => {
   const existing = {
     id: 'part-2',
