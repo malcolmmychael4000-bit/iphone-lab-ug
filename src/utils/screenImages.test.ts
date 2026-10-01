@@ -33,11 +33,22 @@ test('prefers the selected tier image and keeps remote URLs intact', () => {
 
 test('falls back from a missing tier image to primary and then the tier placeholder', () => {
   assert.deepEqual(
-    getScreenImageCandidates(part({ imageUrl: '/images/primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    getScreenImageCandidates(part({ screenTier: 'oLeD (DD)', imageUrl: '/images/primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
     ['/images/primary.webp', 'data:image/svg+xml,oled-placeholder'],
   );
   assert.deepEqual(
     getScreenImageCandidates(part(), 'Incell', 'data:image/svg+xml,incell-placeholder'),
     ['data:image/svg+xml,incell-placeholder'],
+  );
+});
+
+test('does not use an ambiguous or opposite-tier primary image for another tier', () => {
+  assert.deepEqual(
+    getScreenImageCandidates(part({ screenTier: 'Both', imageUrl: '/images/incell-primary.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    ['data:image/svg+xml,oled-placeholder'],
+  );
+  assert.deepEqual(
+    getScreenImageCandidates(part({ screenTier: 'InCell', imageUrl: '/images/incell.webp' }), 'OLED', 'data:image/svg+xml,oled-placeholder'),
+    ['data:image/svg+xml,oled-placeholder'],
   );
 });

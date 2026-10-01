@@ -23,7 +23,10 @@ export function getScreenImageCandidates(
   const tierImage = tier === 'Incell'
     ? part.incell_image_url || part.incellImageUrl
     : part.oled_image_url || part.oledImageUrl;
-  const primaryImage = part.image_url || part.imageUrl;
+  const declaredTier = normalizeScreenTier(part.screenTier);
+  const primaryImage = !declaredTier || declaredTier === tier
+    ? part.image_url || part.imageUrl
+    : '';
   const candidates = [
     sanitizeImageUrl(tierImage, part.id, tier === 'Incell' ? 'incell' : 'oled'),
     sanitizeImageUrl(primaryImage, part.id, 'main'),
