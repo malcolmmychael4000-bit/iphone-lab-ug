@@ -315,8 +315,8 @@ if (sortBy === 'price-desc') {
       className={`py-20 relative transition-colors ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-slate-50'}`}
     >
       {/* Ambient Teal Refraction Glow */}
-      <div className="absolute top-1/4 right-10 w-96 h-96 bg-[#1D9BB5]/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-10 w-96 h-96 bg-[#1F3864]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="mobile-hide-glow absolute top-1/4 right-10 w-96 h-96 bg-[#1D9BB5]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="mobile-hide-glow absolute bottom-1/4 left-10 w-96 h-96 bg-[#1F3864]/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}

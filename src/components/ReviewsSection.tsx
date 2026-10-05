@@ -40,7 +40,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ isDarkMode }) =>
     }`}>
       {/* Ambient background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[20%] left-[10%] w-[450px] h-[450px] bg-[#1D9BB5] rounded-full blur-[130px] opacity-15" />
+        <div className="mobile-hide-glow absolute top-[20%] left-[10%] w-[450px] h-[450px] bg-[#1D9BB5] rounded-full blur-[130px] opacity-15" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

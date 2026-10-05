@@ -38,7 +38,7 @@ export const TrustSection: React.FC<TrustSectionProps> = ({ isDarkMode }) => {
   return (
     <section id="trust" className={`py-20 relative overflow-hidden ${isDarkMode ? 'bg-[#0A0A0A] text-white' : 'bg-white text-slate-900'}`}>
       {/* Background Subtle Gradient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1D9BB5]/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="mobile-hide-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1D9BB5]/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
@@ -100,7 +100,7 @@ export const TrustSection: React.FC<TrustSectionProps> = ({ isDarkMode }) => {
 
         {/* Stats Banner */}
         <div className="bg-[#1F3864] text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#1D9BB5]/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="mobile-hide-glow absolute top-0 right-0 w-96 h-96 bg-[#1D9BB5]/20 rounded-full blur-3xl pointer-events-none" />
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center relative z-10">
             {stats.map((stat, i) => (
