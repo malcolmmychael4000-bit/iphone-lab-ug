@@ -73,7 +73,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, isDarkMode: _isDarkMode 
   return (
     <section
       id="hero"
-      className="relative min-h-[100svh] w-full flex items-center justify-center pt-24 sm:pt-28 pb-16 overflow-hidden bg-[#0A0E17] transform-gpu translate-z-0"
+      className="relative min-h-[100svh] w-full flex items-center justify-center pt-24 sm:pt-28 pb-16 overflow-hidden bg-[#0A0E17]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       aria-label="iPhone Lab Kampala Hero Section"
@@ -90,7 +90,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, isDarkMode: _isDarkMode 
             fetchPriority="high"
             loading="eager"
             decoding="async"
-            className="w-full h-full object-cover object-top opacity-90 block transform-gpu will-change-transform"
+            className="w-full h-full object-cover object-top opacity-90 block"
             onError={(e) => {
               const target = e.currentTarget;
               if (!target.src.endsWith('hero-clean-shop.jpg')) {
@@ -115,8 +115,8 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, isDarkMode: _isDarkMode 
               alt={`iPhone Lab Workshop - ${slide.title}`}
               width={1600}
               height={900}
-              fetchPriority={idx === 0 ? 'high' : 'auto'}
-              loading={idx === 0 ? 'eager' : 'lazy'}
+              fetchPriority={idx === 0 ? 'auto' : 'low'}
+              loading="lazy"
               decoding="async"
               className={`absolute inset-0 w-full h-full object-cover object-center pointer-events-none transition-opacity duration-1000 ease-in-out ${
                 idx === currentBgIndex ? 'opacity-90' : 'opacity-0 pointer-events-none'
@@ -130,14 +130,14 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, isDarkMode: _isDarkMode 
         <div className="absolute inset-0 bg-gradient-to-b from-[#0A0E17]/85 via-[#0A0E17]/60 to-[#0A0E17]/95 pointer-events-none" />
 
         {/* Ambient Glow Highlights - Constrained for Mobile */}
-        <div className="absolute -top-32 -left-32 w-80 sm:w-96 h-80 sm:h-96 bg-[#1D9BB5]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-80 sm:w-96 h-80 sm:h-96 bg-[#1F3864]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden sm:block absolute -top-32 -left-32 w-80 sm:w-96 h-80 sm:h-96 bg-[#1D9BB5]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden sm:block absolute -bottom-32 -right-32 w-80 sm:w-96 h-80 sm:h-96 bg-[#1F3864]/25 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       {/* Main Content Container */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
         {/* Top Floating Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full gold-badge text-xs sm:text-sm font-bold mb-6 shadow-2xl backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full gold-badge text-xs sm:text-sm font-bold mb-6 shadow-2xl backdrop-blur-md max-md:backdrop-blur-none">
           <MapPin className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#1D9BB5] shrink-0" />
           <span>New Pioneer Mall, Kampala · Shop PB86</span>
           <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#D4A017] ml-0.5">
@@ -176,7 +176,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, isDarkMode: _isDarkMode 
           <button
             onClick={() => onNavigate('parts')}
             aria-label="Browse genuine iPhone parts catalog"
-            className="w-full sm:w-auto glass-card hover:bg-white/15 text-white font-bold px-8 py-4 min-h-[48px] rounded-2xl text-base border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group backdrop-blur-md"
+            className="w-full sm:w-auto glass-card hover:bg-white/15 text-white font-bold px-8 py-4 min-h-[48px] rounded-2xl text-base border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group backdrop-blur-md max-md:backdrop-blur-none"
           >
             <Package className="w-5 h-5 text-[#1D9BB5]" />
             <span>Browse Genuine Parts</span>

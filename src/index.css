@@ -72,3 +72,18 @@
   }
 }
 
+@media (max-width: 767px) {
+  .glass-card,
+  .glass-card-dark,
+  .glass-card-light,
+  .ios-glass,
+  .ios-glass-dark,
+  .ios-glass-light {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .mobile-hide-glow {
+    display: none !important;
+  }
+}

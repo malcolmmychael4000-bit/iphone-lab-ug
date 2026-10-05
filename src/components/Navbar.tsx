@@ -138,15 +138,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
             ? isDarkMode
-              ? 'bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl'
-              : 'bg-white/90 backdrop-blur-xl border-b border-slate-200/90 shadow-md'
+              ? 'bg-[#0A0A0A]/90 backdrop-blur-xl max-md:backdrop-blur-none border-b border-white/10 shadow-2xl'
+              : 'bg-white/90 backdrop-blur-xl max-md:backdrop-blur-none border-b border-slate-200/90 shadow-md'
             : isDarkMode
-            ? 'bg-gradient-to-b from-[#0A0A0A]/95 via-[#0A0A0A]/70 to-transparent backdrop-blur-sm'
+            ? 'bg-gradient-to-b from-[#0A0A0A]/95 via-[#0A0A0A]/70 to-transparent backdrop-blur-sm max-md:backdrop-blur-none'
             : 'bg-gradient-to-b from-white/95 to-transparent'
         }`}
       >
         {/* Top Notification Bar */}
-        <div className="bg-[#1F3864]/95 backdrop-blur-md text-white text-xs py-1.5 px-3 sm:px-4 font-medium tracking-wide flex justify-between items-center max-w-7xl mx-auto border-b border-white/10">
+        <div className="bg-[#1F3864]/95 backdrop-blur-md max-md:backdrop-blur-none text-white text-xs py-1.5 px-3 sm:px-4 font-medium tracking-wide flex justify-between items-center max-w-7xl mx-auto border-b border-white/10">
           <div className="flex items-center gap-2 sm:gap-3 truncate">
             <span className="truncate flex items-center gap-1 text-[11px] sm:text-xs">
               <MapPin className="w-3 h-3 text-[#38BDF8] shrink-0" />

@@ -76,8 +76,8 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({
     <section id="services" className={`py-20 relative overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-slate-50'}`}>
       {/* Background Ambient Radial Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[30%] -right-[10%] w-[500px] h-[500px] bg-[#1F3864] rounded-full blur-[140px] opacity-30" />
-        <div className="absolute bottom-[20%] -left-[10%] w-[450px] h-[450px] bg-[#1D9BB5] rounded-full blur-[120px] opacity-20" />
+        <div className="mobile-hide-glow absolute top-[30%] -right-[10%] w-[500px] h-[500px] bg-[#1F3864] rounded-full blur-[140px] opacity-30" />
+        <div className="mobile-hide-glow absolute bottom-[20%] -left-[10%] w-[450px] h-[450px] bg-[#1D9BB5] rounded-full blur-[120px] opacity-20" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

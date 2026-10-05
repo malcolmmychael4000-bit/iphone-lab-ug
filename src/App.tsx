@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Navbar } from './components/Navbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Hero } from './components/Hero';
@@ -124,28 +124,6 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeSection]);
 
-  // Idle background preloading of below-the-fold sections after initial render for 90+ Lighthouse mobile score
-  useEffect(() => {
-    const idlePreload = () => {
-      import('./components/ServicesGrid');
-      import('./components/PartsProductsSection');
-      import('./components/TrustSection');
-      import('./components/ReviewsSection');
-      import('./components/BookingForm');
-      import('./components/ContactSection');
-      import('./components/Footer');
-      import('./components/FloatingWhatsApp');
-    };
-
-    if (typeof window !== 'undefined') {
-      if ('requestIdleCallback' in window) {
-        (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(idlePreload, { timeout: 1500 });
-      } else {
-        setTimeout(idlePreload, 800);
-      }
-    }
-  }, []);
-
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -253,38 +231,38 @@ export default function App() {
           <>
             <Hero onNavigate={handleNavigate} isDarkMode={isDarkMode} />
 
-            <Suspense fallback={<SectionFallback id="services" minHeight="min-h-[600px]" isDarkMode={isDarkMode} />}>
+            <DeferredSection fallback={<SectionFallback id="services" minHeight="min-h-[600px]" isDarkMode={isDarkMode} />}>
               <ServicesGrid
                 isDarkMode={isDarkMode}
                 onSelectServiceForBooking={handleSelectServiceForBooking}
               />
-            </Suspense>
+            </DeferredSection>
 
-            <Suspense fallback={<SectionFallback id="parts" minHeight="min-h-[700px]" isDarkMode={isDarkMode} />}>
+            <DeferredSection fallback={<SectionFallback id="parts" minHeight="min-h-[700px]" isDarkMode={isDarkMode} />}>
               <PartsProductsSection
                 isDarkMode={isDarkMode}
                 onSelectPartForBooking={(partName) => handleSelectServiceForBooking(partName)}
               />
-            </Suspense>
+            </DeferredSection>
 
-            <Suspense fallback={<SectionFallback id="trust" minHeight="min-h-[400px]" isDarkMode={isDarkMode} />}>
+            <DeferredSection fallback={<SectionFallback id="trust" minHeight="min-h-[400px]" isDarkMode={isDarkMode} />}>
               <TrustSection isDarkMode={isDarkMode} />
-            </Suspense>
+            </DeferredSection>
 
-            <Suspense fallback={<SectionFallback id="reviews" minHeight="min-h-[450px]" isDarkMode={isDarkMode} />}>
+            <DeferredSection fallback={<SectionFallback id="reviews" minHeight="min-h-[450px]" isDarkMode={isDarkMode} />}>
               <ReviewsSection isDarkMode={isDarkMode} />
-            </Suspense>
+            </DeferredSection>
 
-            <Suspense fallback={<SectionFallback id="booking" minHeight="min-h-[650px]" isDarkMode={isDarkMode} />}>
+            <DeferredSection fallback={<SectionFallback id="booking" minHeight="min-h-[650px]" isDarkMode={isDarkMode} />}>
               <BookingForm
                 isDarkMode={isDarkMode}
                 preselectedService={preselectedService}
               />
-            </Suspense>
+            </DeferredSection>
 
-            <Suspense fallback={<SectionFallback id="contact" minHeight="min-h-[500px]" isDarkMode={isDarkMode} />}>
+            <DeferredSection fallback={<SectionFallback id="contact" minHeight="min-h-[500px]" isDarkMode={isDarkMode} />}>
               <ContactSection isDarkMode={isDarkMode} />
-            </Suspense>
+            </DeferredSection>
           </>
         )}
       </main>
@@ -293,9 +271,9 @@ export default function App() {
       <Suspense fallback={null}>
         <FloatingWhatsApp />
       </Suspense>
-      <Suspense fallback={<footer className="h-40 bg-slate-950" />}>
+      <DeferredSection fallback={<footer className="h-40 bg-slate-950" />}>
         <Footer isDarkMode={isDarkMode} onNavigate={handleNavigate} />
-      </Suspense>
+      </DeferredSection>
 
       {/* Modern App-Style Bottom Quick Navigation Bar for Mobile */}
       {activeSection !== 'admin' && (
@@ -309,3 +287,46 @@ export default function App() {
     </div>
   );
 }
+
+interface DeferredSectionProps {
+  children: React.ReactNode;
+  fallback: React.ReactNode;
+}
+
+const DeferredSection: React.FC<DeferredSectionProps> = ({ children, fallback }) => {
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (!('IntersectionObserver' in window)) {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsNearViewport(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px 0px' }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full">
+      {isNearViewport ? (
+        <Suspense fallback={fallback}>{children}</Suspense>
+      ) : (
+        fallback
+      )}
+    </div>
+  );
+};
