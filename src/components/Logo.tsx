@@ -15,27 +15,28 @@ export const Logo: React.FC<LogoProps> = ({
 }) => {
   const wordmarkSizeClass =
     size === 'lg'
-      ? 'h-12 w-40'
+      ? 'h-11 w-[116px]'
       : size === 'sm'
-      ? 'h-8 w-28'
-      : 'h-10 w-36';
+      ? 'h-7 w-[74px]'
+      : 'h-8 w-[84px] sm:h-10 sm:w-[105px]';
 
-  const badgeSizeClass =
+  const countryMarkSizeClass =
     size === 'lg'
-      ? 'text-sm sm:text-base px-2.5 py-1 font-black'
+      ? 'text-sm'
       : size === 'sm'
-      ? 'text-xs px-2 py-0.5 font-extrabold'
-      : 'text-xs sm:text-sm px-2 py-0.5 font-black';
+      ? 'text-[10px]'
+      : 'text-[11px] sm:text-xs';
+
   return (
     <div className={`inline-flex flex-col justify-center text-left select-none ${className}`} aria-label="iPhone Lab UG">
-      <div className="inline-flex items-center gap-1.5 sm:gap-2 leading-none">
+      <div className="inline-flex items-center gap-1 leading-none">
         <img
           src={isDarkMode ? '/iphone-lab-ug-wordmark-dark.png' : '/iphone-lab-ug-wordmark-light.png'}
           alt="iPhone Lab"
           className={`${wordmarkSizeClass} shrink-0 object-contain`}
         />
         <span
-          className={`${badgeSizeClass} inline-flex items-center justify-center font-black uppercase rounded-md bg-[#1D9BB5] text-white tracking-wider font-sans shadow-sm leading-none self-center`}
+          className={`${countryMarkSizeClass} border-l border-[#1D9BB5]/60 pl-1.5 font-black uppercase tracking-wide text-[#1D9BB5] font-sans leading-none self-center`}
         >
           UG
         </span>
