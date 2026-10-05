@@ -26,10 +26,21 @@ export const Logo: React.FC<LogoProps> = ({
       : size === 'sm'
       ? 'text-xs px-2 py-0.5 font-extrabold'
       : 'text-xs sm:text-sm px-2 py-0.5 font-black';
+  const imageSizeClass =
+    size === 'lg'
+      ? 'h-12 w-10'
+      : size === 'sm'
+      ? 'h-9 w-7'
+      : 'h-10 w-8';
 
   return (
     <div className={`inline-flex flex-col justify-center text-left select-none ${className}`} aria-label="iPhone Lab UG">
       <div className="inline-flex items-center gap-1.5 sm:gap-2 leading-none">
+        <img
+          src="/iphone-lab-ug-logo.png"
+          alt=""
+          className={`${imageSizeClass} shrink-0 rounded-md object-contain`}
+        />
         <span
           className={`${textSizeClass} font-black tracking-tight font-sans transition-colors ${
             isDarkMode ? 'text-white' : 'text-slate-900'
@@ -51,5 +62,4 @@ export const Logo: React.FC<LogoProps> = ({
     </div>
   );
 };
-
 
