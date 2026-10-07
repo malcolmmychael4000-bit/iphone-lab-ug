@@ -4,4 +4,4 @@ Disallow: /api/
 Disallow: /admin
 
 # Sitemap Location
-Sitemap: https://iphonelabug.com/sitemap.xml
+Sitemap: https://www.iphonelab.ug/sitemap.xml
